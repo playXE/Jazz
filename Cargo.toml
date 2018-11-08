@@ -3,6 +3,11 @@ name = "jazz"
 version = "0.1.0"
 authors = ["Adel Prokurov <adel.prokurov@protonmail.com>"]
 edition = "2018"
+description = "Jazz Virtual Machine"
+readne = "README.md"
+repository = "https://github.com/playXE/Jazz"
+keywords = ["vm","register","register-based"]
+license = "MIT"
 
 [dependencies]
 time = "*"
