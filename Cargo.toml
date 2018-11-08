@@ -10,4 +10,4 @@ keywords = ["vm","register","register-based"]
 license = "MIT"
 
 [dependencies]
-time = "*"
+time = "0.1.40"
