@@ -16,9 +16,18 @@
 //! Jazz is heavily inspired by [Gravity](https://marcobambini.github.io/gravity/#/) language VM
 //!
 
+#![allow(dead_code)]
+#![allow(unused_variables)]
+#![allow(unused_imports)]
+
 extern crate time;
 pub mod frame;
+pub mod function;
 pub mod jit;
 pub mod machine;
+pub mod object;
+pub mod object_info;
+pub mod object_pool;
 pub mod opcodes;
+pub mod static_root;
 pub mod value;

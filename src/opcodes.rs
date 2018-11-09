@@ -13,6 +13,7 @@ pub enum Instruction
     /// LoadDouble R(A) = B
     /// Loading double value B to register A
     LoadDouble(usize, f64),
+    LoadObject(usize, usize),
     /// LoadConst R(A) = C(B)
     /// Load constant from object pool to register A
     LoadConst(usize, usize),
