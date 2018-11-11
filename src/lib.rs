@@ -20,9 +20,8 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 #![allow(unused_imports)]
+#![warn(rust_2018_idioms)]
 
-extern crate time;
-extern crate libc;
 
 pub mod frame;
 pub mod function;

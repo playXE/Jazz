@@ -27,9 +27,9 @@ pub trait Object: Send
         panic!("Cannot load_at");
     }
 
-    fn as_any(&self) -> &Any;
+    fn as_any(&self) -> &dyn Any;
 
-    fn as_any_mut(&mut self) -> &mut Any;
+    fn as_any_mut(&mut self) -> &mut dyn Any;
 
     fn get_children(&self) -> Vec<usize>;
 }

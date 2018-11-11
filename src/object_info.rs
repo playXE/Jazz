@@ -3,20 +3,20 @@ use std::{cell::Cell, ops::Deref, rc::Rc};
 
 pub struct ObjectInfo
 {
-    object: Box<Object>,
+    object: Box<dyn Object>,
     native_ref_info: ObjectNativeRefInfo,
 }
 
 pub struct ObjectHandle<'a>
 {
-    object: &'a Object,
+    object: &'a dyn Object,
     _native_ref_info: ObjectNativeRefInfo,
 }
 
 impl<'a> Deref for ObjectHandle<'a>
 {
-    type Target = &'a Object;
-    fn deref(&self) -> &&'a Object
+    type Target = &'a dyn Object;
+    fn deref(&self) -> &&'a dyn Object
     {
         &self.object
     }
@@ -33,7 +33,7 @@ pub struct ObjectNativeRefInfo
 
 impl ObjectInfo
 {
-    pub fn new(obj: Box<Object>) -> ObjectInfo
+    pub fn new(obj: Box<dyn Object>) -> ObjectInfo
     {
         ObjectInfo {
             object: obj,
@@ -49,7 +49,7 @@ impl ObjectInfo
         self.native_ref_info.gc_notified = true;
     }
 
-    pub fn as_object(&self) -> &Object
+    pub fn as_object(&self) -> &dyn Object
     {
         &*self.object
     }
@@ -66,7 +66,7 @@ impl ObjectInfo
     pub fn handle<'a>(&self) -> ObjectHandle<'a>
     {
         ObjectHandle {
-            object: unsafe { ::std::mem::transmute::<&Object, &'static Object>(&*self.object) },
+            object: unsafe { ::std::mem::transmute::<&dyn Object, &'static dyn Object>(&*self.object) },
             _native_ref_info: self.native_ref_info.clone(),
         }
     }
@@ -110,7 +110,7 @@ impl Drop for ObjectNativeRefInfo
     }
 }
 
-pub struct TypedObjectHandle<'a, T: 'a>
+pub struct TypedObjectHandle<'a, T>
 {
     _handle: ObjectHandle<'a>,
     value: &'a T,

@@ -12,14 +12,14 @@ pub enum Function
 
 impl Object for Function
 {
-    fn as_any(&self) -> &Any
+    fn as_any(&self) -> &dyn Any
     {
-        self as &Any
+        self as &dyn Any
     }
 
-    fn as_any_mut(&mut self) -> &mut Any
+    fn as_any_mut(&mut self) -> &mut dyn Any
     {
-        self as &mut Any
+        self as &mut dyn Any
     }
 
     /// Get Object Id's(Used for GC) W.I.P
@@ -78,7 +78,7 @@ impl From<Vec<Instruction>> for Function
     }
 }
 
-pub struct NativeFunction(Box<Fn(&mut Machine, Vec<Value>) -> Value + Send>);
+pub struct NativeFunction(Box<dyn Fn(&mut Machine, Vec<Value>) -> Value + Send>);
 
 impl NativeFunction
 {
@@ -92,7 +92,7 @@ use std::fmt;
 
 impl fmt::Debug for NativeFunction
 {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
     {
         write!(f, "<native function>")
     }

@@ -129,17 +129,6 @@ impl CallFrame
         }
     }
 
-    /*pub fn run_blocks(&mut self) -> Value {
-        let value = loop {
-            let value = self.run();
-            match value {
-                Some(val) => break val,
-                None => {}
-            }
-        };
-        value
-    }*/
-
     pub fn reset(&mut self)
     {
         for i in 0..self.stack.len() {
