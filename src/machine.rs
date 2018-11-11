@@ -152,16 +152,17 @@ impl Machine
                 }
 
                 Instruction::Call(dest, r2, argc) => {
+
                     let args = {
-                        let mut temp = vec![];
+                        let mut temp: Vec<Value> = vec![];
                         for _ in 0..*argc {
-                            temp.push(
-                                self.last_frame_mut()
-                                    .arg_stack
-                                    .pop()
-                                    .expect("Arg stack empty"),
-                            );
+                            let v = self.last_frame_mut().arg_stack.pop();
+                            match v {
+                                None => temp.push(Value::Null), // if less arguments are passed then fill the holes with Null values
+                                Some(v) => temp.push(v),
+                            };
                         }
+
                         temp
                     };
 
@@ -303,7 +304,7 @@ impl Machine
                         let value = self.globals.get(index).unwrap();
                         self.set(*reg, *value);
                     } else {
-                        panic!("No value in globals");
+                        panic!("No value with index `{}` in globals",index);
                     }
                 }
 
@@ -311,6 +312,8 @@ impl Machine
                     let value = self.get(*reg);
                     self.globals.insert(*index, value);
                 }
+
+                
 
                 Instruction::JumpF(r1, idx) => {
                     let v = self.get(*r1);

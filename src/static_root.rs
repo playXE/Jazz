@@ -13,14 +13,14 @@ impl Object for StaticRoot
         self.children.borrow().clone()
     }
 
-    fn as_any(&self) -> &Any
+    fn as_any(&self) -> &dyn Any
     {
-        self as &Any
+        self as &dyn Any
     }
 
-    fn as_any_mut(&mut self) -> &mut Any
+    fn as_any_mut(&mut self) -> &mut dyn Any
     {
-        self as &mut Any
+        self as &mut dyn Any
     }
 }
 

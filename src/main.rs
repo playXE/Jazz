@@ -25,9 +25,10 @@ fn main()
     let obj = machine.pool.allocate(Box::new(func));
 
     let code2 = vec![
-        Instruction::LoadObject(1, obj),
-        Instruction::Call(1, 1, 0),
-        Instruction::Ret(1),
+        Instruction::LoadInt(1,12),
+        Instruction::LoadObject(2, obj),
+        Instruction::Call(2, 2, 0),
+        Instruction::Ret(2),
     ];
 
     let func2 = Function::from_instructions(code2, 0);

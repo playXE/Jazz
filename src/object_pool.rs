@@ -25,7 +25,7 @@ impl ObjectPool
     }
 
     /// Pins an object to the pool.
-    pub fn allocate(&mut self, mut inner: Box<Object>) -> usize
+    pub fn allocate(&mut self, mut inner: Box<dyn Object>) -> usize
     {
         inner.initialize(self);
 
@@ -70,7 +70,7 @@ impl ObjectPool
     }
 
     /// Gets a direct reference to the object at `id`.
-    pub fn get_direct(&self, id: usize) -> &Object
+    pub fn get_direct(&self, id: usize) -> &dyn Object
     {
         self.objects[id].as_ref().unwrap().as_object()
     }
