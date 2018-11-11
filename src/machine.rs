@@ -4,7 +4,7 @@ use std::collections::HashMap;
 ///Machine that executes code
 pub struct Machine
 {
-    pub stack: CallStack,
+    pub stack: Vec<CallFrame>,
     pub pool: ObjectPool,
     pub globals: HashMap<usize, Value>,
 }
@@ -14,7 +14,7 @@ impl Machine
     pub fn new() -> Machine
     {
         Machine {
-            stack: CallStack::new(4096),
+            stack: Vec::with_capacity(4096),
             pool: ObjectPool::new(),
             globals: HashMap::new(),
         }
@@ -22,12 +22,12 @@ impl Machine
 
     pub fn last_frame(&self) -> &CallFrame
     {
-        self.stack.frames.last().unwrap()
+        self.stack.last().unwrap()
     }
 
     pub fn last_frame_mut(&mut self) -> &mut CallFrame
     {
-        self.stack.frames.last_mut().unwrap()
+        self.stack.last_mut().unwrap()
     }
 
     pub fn get(&mut self, rnum: usize) -> Value
@@ -49,7 +49,12 @@ impl Machine
         self.last_frame_mut().set(reg, v);
     }
 
-    pub fn invoke(&mut self, callable: Value, args: Vec<Value>, dest: usize)
+    pub fn dispatch(&mut self)
+    {
+        self.last_frame_mut().ip += 1;
+    }
+
+    pub fn invoke(&mut self, callable: Value, args: Vec<Value>) -> Value
     {
         let id = match callable {
             Value::Object(id) => id,
@@ -59,241 +64,227 @@ impl Machine
         };
 
         let obj = self.pool.get(id);
-
+        self.stack.push(CallFrame::new());
         let ret = {
-            let frame = self.stack.top_mut();
-            frame.init_with_args(&args.as_slice());
-
+            self.last_frame_mut().init_with_args(&args.as_slice());
             obj.call(self, args)
         };
 
-        self.stack.pop();
-        self.set(dest, ret);
+        ret
     }
 
     pub fn branch(&mut self, idx: usize)
     {
-        self.last_frame_mut().bp = idx;
-        self.last_frame_mut().blocks[idx].ip = 0;
+        self.last_frame_mut().ip = idx;
     }
 
-    pub fn fetch_opcode(&mut self) -> Instruction
+    pub fn run_code(&mut self, code: Vec<Instruction>) -> Value
     {
-        self.last_frame_mut().fetch_opcode()
-    }
+        self.last_frame_mut().code = code;
+        self.last_frame_mut().ip = 0;
 
-    pub fn run_blocks(&mut self, blocks: Vec<CodeBlock>) -> Value
-    {
-        self.last_frame_mut().blocks = blocks;
-        self.last_frame_mut().bp = 0;
-        let mut old_bp = self.last_frame().bp;
-        let value = loop {
-            if old_bp != self.last_frame().bp {
-                old_bp = self.last_frame().bp;
-            }
-
-            let ret = self.execute_op();
-
-            match ret {
-                Some(val) => break val,
-                None => {}
-            }
-        };
+        let value = self.execute_op();
 
         value
     }
 
-    pub fn execute_op(&mut self) -> Option<Value>
+    pub fn execute_op(&mut self) -> Value
     {
-        let opcode = self.fetch_opcode();
-        match &opcode {
-            Instruction::PushArg(reg) => {
-                let value = self.get(*reg);
-                self.last_frame_mut().arg_stack.push(value);
-                None
+        let mut returns = false;
+        let mut ret = Value::Null;
+
+        while self.last_frame().ip < self.last_frame().code.len() {
+            if returns {
+                break;
             }
 
-            Instruction::LoadInt(dest, int) => {
-                self.set(*dest, Value::Int(*int));
-                None
-            }
+            let opcode = self.last_frame().code[self.last_frame().ip].clone();
 
-            Instruction::LoadFloat(dest, float) => {
-                self.set(*dest, Value::Float(*float));
-                None
-            }
+            match &opcode {
+                Instruction::PushArg(reg) => {
+                    let value = self.get(*reg);
+                    self.last_frame_mut().arg_stack.push(value);
+                }
 
-            Instruction::Add(dest, r1, r2) => {
-                let (v1, v2) = (self.get(*r1), self.get(*r2));
+                Instruction::LoadInt(dest, int) => {
+                    self.set(*dest, Value::Int(*int));
+                }
 
-                let result = match (v1, v2) {
-                    (Value::Int(i), Value::Int(i2)) => Value::Int(i + i2),
-                    (Value::Float(f), Value::Float(f2)) => Value::Float(f + f2),
-                    (Value::Long(i), Value::Long(i2)) => Value::Long(i + i2),
-                    (Value::Double(f), Value::Double(f2)) => Value::Double(f + f2),
-                    _ => unimplemented!(),
-                };
+                Instruction::LoadDouble(dest, double) => {
+                    self.set(*dest, Value::Double(*double));
+                }
 
-                self.set(*dest, result);
-                None
-            }
+                Instruction::LoadLong(dest, long) => {
+                    self.set(*dest, Value::Long(*long));
+                }
 
-            Instruction::Call(dest, r2, argc) => {
-                let args = {
-                    let mut temp = vec![];
-                    for _ in 0..*argc {
-                        temp.push(
-                            self.last_frame_mut()
-                                .arg_stack
-                                .pop()
-                                .expect("Arg stack empty"),
-                        );
+                Instruction::LoadFloat(dest, float) => {
+                    self.set(*dest, Value::Float(*float));
+                }
+
+                Instruction::Add(dest, r1, r2) => {
+                    let (v1, v2) = (self.get(*r1), self.get(*r2));
+
+                    let result = match (v1, v2) {
+                        (Value::Int(i), Value::Int(i2)) => Value::Int(i + i2),
+                        (Value::Float(f), Value::Float(f2)) => Value::Float(f + f2),
+                        (Value::Long(i), Value::Long(i2)) => Value::Long(i + i2),
+                        (Value::Double(f), Value::Double(f2)) => Value::Double(f + f2),
+                        _ => unimplemented!(),
+                    };
+
+                    self.set(*dest, result);
+                }
+
+                Instruction::Call(dest, r2, argc) => {
+                    let args = {
+                        let mut temp = vec![];
+                        for _ in 0..*argc {
+                            temp.push(
+                                self.last_frame_mut()
+                                    .arg_stack
+                                    .pop()
+                                    .expect("Arg stack empty"),
+                            );
+                        }
+                        temp
+                    };
+
+                    let value = self.get(*r2);
+
+                    let v = self.invoke(value, args);
+                    self.stack.pop();
+                    self.set(*dest, v);
+                }
+                Instruction::Sub(dest, r1, r2) => {
+                    let (v1, v2) = (self.get(*r1), self.get(*r2));
+
+                    let result = match (v1, v2) {
+                        (Value::Int(i), Value::Int(i2)) => Value::Int(i * i2),
+                        (Value::Float(f), Value::Float(f2)) => Value::Float(f * f2),
+                        (Value::Long(i), Value::Long(i2)) => Value::Long(i * i2),
+                        (Value::Double(f), Value::Double(f2)) => Value::Double(f * f2),
+                        _ => unimplemented!(),
+                    };
+
+                    self.set(*dest, result);
+                }
+
+                Instruction::Div(dest, r1, r2) => {
+                    let (v1, v2) = (self.get(*r1), self.get(*r2));
+
+                    let result = match (v1, v2) {
+                        (Value::Int(i), Value::Int(i2)) => Value::Int(i / i2),
+                        (Value::Float(f), Value::Float(f2)) => Value::Float(f / f2),
+                        (Value::Long(i), Value::Long(i2)) => Value::Long(i / i2),
+                        (Value::Double(f), Value::Double(f2)) => Value::Double(f / f2),
+                        _ => unimplemented!(),
+                    };
+
+                    self.set(*dest, result);
+                }
+
+                Instruction::Mul(dest, r1, r2) => {
+                    let (v1, v2) = (self.get(*r1), self.get(*r2));
+
+                    let result = match (v1, v2) {
+                        (Value::Int(i), Value::Int(i2)) => Value::Int(i * i2),
+                        (Value::Float(f), Value::Float(f2)) => Value::Float(f * f2),
+                        (Value::Long(i), Value::Long(i2)) => Value::Long(i * i2),
+                        (Value::Double(f), Value::Double(f2)) => Value::Double(f * f2),
+                        _ => unimplemented!(),
+                    };
+
+                    self.set(*dest, result);
+                }
+
+                Instruction::LoadObject(reg, idx) => {
+                    self.set(*reg, Value::Object(*idx));
+                }
+
+                Instruction::Gt(dest, r1, r2) => {
+                    let (v1, v2) = (self.get(*r1), self.get(*r2));
+                    let result = match (v1, v2) {
+                        (Value::Int(i), Value::Int(i2)) => Value::Bool(i > i2),
+                        (Value::Long(i), Value::Long(i2)) => Value::Bool(i > i2),
+                        (Value::Float(f), Value::Float(f2)) => Value::Bool(f > f2),
+                        (Value::Double(f), Value::Double(f2)) => Value::Bool(f > f2),
+                        _ => unimplemented!(),
+                    };
+
+                    self.set(*dest, result);
+                }
+
+                Instruction::Lt(dest, r1, r2) => {
+                    let (v1, v2) = (self.get(*r1), self.get(*r2));
+                    let result = match (v1, v2) {
+                        (Value::Int(i), Value::Int(i2)) => Value::Bool(i < i2),
+                        (Value::Long(i), Value::Long(i2)) => Value::Bool(i < i2),
+                        (Value::Float(f), Value::Float(f2)) => Value::Bool(f < f2),
+                        (Value::Double(f), Value::Double(f2)) => Value::Bool(f < f2),
+                        _ => unimplemented!(),
+                    };
+
+                    self.set(*dest, result);
+                }
+
+                Instruction::Jump(idx) => {
+                    self.branch(*idx - 1);
+                }
+                Instruction::JumpT(r1, idx) => {
+                    let v = self.get(*r1);
+                    match v {
+                        Value::Bool(b) => {
+                            if b {
+                                self.branch(*idx - 1);
+                            }
+                        }
+                        _ => unimplemented!(),
                     }
-                    temp
-                };
+                }
 
-                let value = self.get(*r2);
+                Instruction::LoadGlobal(index, reg) => {
+                    if self.globals.contains_key(index) {
+                        let value = self.globals.get(index).unwrap();
+                        self.set(*reg, *value);
+                    } else {
+                        panic!("No value in globals");
+                    }
+                }
 
-                self.invoke(value, args, *dest);
-                None
-            }
-            Instruction::Sub(dest, r1, r2) => {
-                let (v1, v2) = (self.get(*r1), self.get(*r2));
+                Instruction::StoreGlobal(index, reg) => {
+                    let value = self.get(*reg);
+                    self.globals.insert(*index, value);
+                }
 
-                let result = match (v1, v2) {
-                    (Value::Int(i), Value::Int(i2)) => Value::Int(i * i2),
-                    (Value::Float(f), Value::Float(f2)) => Value::Float(f * f2),
-                    (Value::Long(i), Value::Long(i2)) => Value::Long(i * i2),
-                    (Value::Double(f), Value::Double(f2)) => Value::Double(f * f2),
-                    _ => unimplemented!(),
-                };
-
-                self.set(*dest, result);
-                None
-            }
-
-            Instruction::Div(dest, r1, r2) => {
-                let (v1, v2) = (self.get(*r1), self.get(*r2));
-
-                let result = match (v1, v2) {
-                    (Value::Int(i), Value::Int(i2)) => Value::Int(i / i2),
-                    (Value::Float(f), Value::Float(f2)) => Value::Float(f / f2),
-                    (Value::Long(i), Value::Long(i2)) => Value::Long(i / i2),
-                    (Value::Double(f), Value::Double(f2)) => Value::Double(f / f2),
-                    _ => unimplemented!(),
-                };
-
-                self.set(*dest, result);
-                None
-            }
-
-            Instruction::Mul(dest, r1, r2) => {
-                let (v1, v2) = (self.get(*r1), self.get(*r2));
-
-                let result = match (v1, v2) {
-                    (Value::Int(i), Value::Int(i2)) => Value::Int(i * i2),
-                    (Value::Float(f), Value::Float(f2)) => Value::Float(f * f2),
-                    (Value::Long(i), Value::Long(i2)) => Value::Long(i * i2),
-                    (Value::Double(f), Value::Double(f2)) => Value::Double(f * f2),
-                    _ => unimplemented!(),
-                };
-
-                self.set(*dest, result);
-                None
-            }
-
-            Instruction::LoadObject(reg, idx) => {
-                self.set(*reg, Value::Object(*idx));
-                None
-            }
-
-            Instruction::Gt(dest, r1, r2) => {
-                let (v1, v2) = (self.get(*r1), self.get(*r2));
-                let result = match (v1, v2) {
-                    (Value::Int(i), Value::Int(i2)) => Value::Bool(i > i2),
-                    (Value::Long(i), Value::Long(i2)) => Value::Bool(i > i2),
-                    (Value::Float(f), Value::Float(f2)) => Value::Bool(f > f2),
-                    (Value::Double(f), Value::Double(f2)) => Value::Bool(f > f2),
-                    _ => unimplemented!(),
-                };
-
-                self.set(*dest, result);
-                None
-            }
-
-            Instruction::Lt(dest, r1, r2) => {
-                let (v1, v2) = (self.get(*r1), self.get(*r2));
-                let result = match (v1, v2) {
-                    (Value::Int(i), Value::Int(i2)) => Value::Bool(i < i2),
-                    (Value::Long(i), Value::Long(i2)) => Value::Bool(i < i2),
-                    (Value::Float(f), Value::Float(f2)) => Value::Bool(f < f2),
-                    (Value::Double(f), Value::Double(f2)) => Value::Bool(f < f2),
-                    _ => unimplemented!(),
-                };
-
-                self.set(*dest, result);
-                None
-            }
-
-            Instruction::Jump(idx) => {
-                self.branch(*idx);
-                None
-            }
-            Instruction::JumpT(r1, idx) => {
-                let v = self.get(*r1);
-                match v {
-                    Value::Bool(b) => {
-                        if b {
+                Instruction::JumpF(r1, idx) => {
+                    let v = self.get(*r1);
+                    if let Value::Bool(b) = v {
+                        if !b {
                             self.branch(*idx);
                         }
+                    } else {
+                        panic!("Expected bool");
                     }
-                    _ => unimplemented!(),
                 }
 
-                None
-            }
-
-            Instruction::LoadGlobal(index, reg) => {
-                if self.globals.contains_key(index) {
-                    let value = self.globals.get(index).unwrap();
-                    self.set(*reg, *value);
-                    None
-                } else {
-                    panic!("No value in globals");
+                Instruction::Move(r1, r2) => {
+                    self.last_frame_mut().stack[*r1] = self.last_frame().stack[*r2];
                 }
-            }
 
-            Instruction::StoreGlobal(index, reg) => {
-                let value = self.get(*reg);
-                self.globals.insert(*index, value);
-                None
-            }
-
-            Instruction::JumpF(r1, idx) => {
-                let v = self.get(*r1);
-                if let Value::Bool(b) = v {
-                    if !b {
-                        self.branch(*idx);
-                    }
-                } else {
-                    panic!("Expected bool");
+                Instruction::Ret(idx) => {
+                    ret = self.get(*idx);
+                    returns = true;
                 }
-                None
+
+                Instruction::Ret0 => {
+                    returns = true;
+                }
+
+                _ => unimplemented!(),
             }
-
-            Instruction::Move(r1, r2) => {
-                self.last_frame_mut().stack[*r1] = self.last_frame().stack[*r2];
-
-                None
-            }
-
-            Instruction::Ret(idx) => {
-                return Some(self.get(*idx));
-            }
-
-            Instruction::Ret0 => return Some(Value::Null),
-
-            _ => unimplemented!(),
+            self.dispatch();
         }
+        ret
     }
 }

@@ -82,8 +82,10 @@ impl fmt::Debug for Instruction
             Instruction::Ret(reg) => write!(f, "Ret R({})", reg),
             Instruction::Ret0 => write!(f, "Ret R(Null)"),
             Instruction::Jump(idx) => write!(f, "Jump ip = {}", idx),
-            Instruction::JumpF(reg, idx) => write!(f, "JumpF (R({}) == false) ? ip = {}", reg, idx),
-            Instruction::JumpT(reg, idx) => write!(f, "JumpT (R({}) == true ? ip = {}", reg, idx),
+            Instruction::JumpF(reg, idx) => {
+                write!(f, "JumpF (R({}) == false) ? ip = {})", reg, idx)
+            }
+            Instruction::JumpT(reg, idx) => write!(f, "JumpT (R({}) == true ? ip = {})", reg, idx),
             Instruction::Add(reg3, reg2, reg1) => {
                 write!(f, "Add R({}) = R({}) + R({})", reg3, reg2, reg1)
             }
@@ -91,7 +93,7 @@ impl fmt::Debug for Instruction
                 write!(f, "Sub R({}) = R({}) - R({})", reg3, reg2, reg1)
             }
             Instruction::Mul(reg3, reg2, reg1) => {
-                write!(f, "Sub R({}) = R({}) * R({})", reg3, reg2, reg1)
+                write!(f, "Mul R({}) = R({}) * R({})", reg3, reg2, reg1)
             }
             Instruction::Div(reg3, reg2, reg1) => {
                 write!(f, "Div R({}) = R({}) / R({})", reg3, reg2, reg1)
@@ -99,30 +101,54 @@ impl fmt::Debug for Instruction
             Instruction::Gt(reg3, reg2, reg1) => {
                 write!(f, "Gt R({}) = R({}) > R({})", reg3, reg2, reg1)
             }
-            v => write!(f, "{:?}", v),
+            Instruction::Call(dest, r2, argc) => {
+                write!(f, "Call R({}) = R({})({})", dest, r2, argc)
+            }
+            Instruction::LoadObject(dest, pool_id) => {
+                write!(f, "LoadObject R({}) = P({})", dest, pool_id)
+            }
+            Instruction::Lt(reg3, reg2, reg1) => {
+                write!(f, "Lt R({}) = R({} < R({})", reg3, reg2, reg1)
+            }
+            _ => write!(f, "unimplemented!"),
         }
     }
 }
 
+///Trait used for print Vec\<Instruction\>
+///
+/// # Example
+/// ```rust
+/// 0000 LoadInt(0,2)
+/// 0001 Add(0,0,0)
+/// 0002 LoadInt(1,4)
+/// 0003 Gt(2,1,0),
+///
+/// ```
+///
+pub trait DebugCode
+{
+    fn toString(&self) -> String;
+}
+
+impl DebugCode for Vec<Instruction>
+{
+    fn toString(&self) -> String
+    {
+        let mut str = String::new();
+        for i in 0..self.len() {
+            str.push_str(&format!("{:04} {:?}", i, self[i]));
+            str.push('\n');
+        }
+        str
+    }
+}
 /// Stores instructions
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct CodeBlock
 {
     pub code: Vec<Instruction>,
     pub ip: usize,
-}
-
-impl fmt::Debug for CodeBlock
-{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
-    {
-        writeln!(f, "CodeBlock:");
-        writeln!(f, "code:");
-        for i in 0..self.code.len() {
-            writeln!(f, "{:05} {:?}", i, self.code[i]);
-        }
-        write!(f, "")
-    }
 }
 
 impl CodeBlock

@@ -22,11 +22,13 @@ impl Object for Function
         self as &mut Any
     }
 
+    /// Get Object Id's(Used for GC) W.I.P
     fn get_children(&self) -> Vec<usize>
     {
         vec![]
     }
 
+    /// Call object
     fn call(&self, m: &mut Machine, args: Vec<Value>) -> Value
     {
         match self {
@@ -37,7 +39,7 @@ impl Object for Function
                     m.last_frame_mut().stack[i] = args[i];
                 }
 
-                m.run_blocks(func.code_blocks)
+                m.run_code(func.code)
             }
 
             Function::Native(nv) => nv.invoke(m, args),
@@ -48,16 +50,16 @@ impl Object for Function
 #[derive(Clone, Debug)]
 pub struct VirtualFunction
 {
-    pub code_blocks: Vec<CodeBlock>,
+    pub code: Vec<Instruction>,
     pub argc: usize,
 }
 
 impl Function
 {
-    pub fn from_code_blocks(blocks: Vec<CodeBlock>, args: usize) -> Function
+    pub fn from_instructions(code: Vec<Instruction>, args: usize) -> Function
     {
         Function::Virtual(VirtualFunction {
-            code_blocks: blocks,
+            code: code,
             argc: args,
         })
     }
@@ -65,6 +67,14 @@ impl Function
     pub fn from_native(f: NativeFunction) -> Function
     {
         Function::Native(f)
+    }
+}
+
+impl From<Vec<Instruction>> for Function
+{
+    fn from(f: Vec<Instruction>) -> Function
+    {
+        Function::Virtual(VirtualFunction { code: f, argc: 0 })
     }
 }
 

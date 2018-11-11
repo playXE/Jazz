@@ -8,9 +8,9 @@ use crate::{
 pub struct CallFrame
 {
     /// pointer to current block
-    pub bp: usize,
+    pub ip: usize,
     /// blocks
-    pub blocks: Vec<CodeBlock>,
+    pub code: Vec<Instruction>,
     /// registers stored in stack, default size of `stack` is 4096
     pub stack: Vec<Value>,
     /// arguments stack, used by Call instruction
@@ -33,7 +33,7 @@ impl CallStack
     {
         let mut frames = Vec::with_capacity(len);
         for _ in 0..len {
-            frames.push(CallFrame::new(vec![]));
+            frames.push(CallFrame::new());
         }
 
         CallStack {
@@ -96,7 +96,7 @@ pub struct Fiber
 
 impl CallFrame
 {
-    pub fn new(code: Vec<CodeBlock>) -> CallFrame
+    pub fn new() -> CallFrame
     {
         let mut vec = Vec::with_capacity(4095);
         for _ in 0..4095 {
@@ -104,9 +104,9 @@ impl CallFrame
         }
 
         CallFrame {
-            bp: 0,
+            ip: 0,
 
-            blocks: code,
+            code: vec![],
             stack: vec,
             arg_stack: vec![],
         }
@@ -140,20 +140,13 @@ impl CallFrame
         value
     }*/
 
-    pub fn fetch_opcode(&mut self) -> Instruction
-    {
-        let bb = &mut self.blocks[self.bp];
-        let op = bb.code[bb.ip].clone();
-        bb.ip += 1;
-        op
-    }
-
     pub fn reset(&mut self)
     {
         for i in 0..self.stack.len() {
             self.stack[i] = Value::Null;
         }
         self.arg_stack.clear();
+        self.code.clear();
     }
 
     pub fn jit_run(&mut self) -> Value

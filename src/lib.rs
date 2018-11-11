@@ -16,6 +16,7 @@
 //! Jazz is heavily inspired by [Gravity](https://marcobambini.github.io/gravity/#/) language VM
 //!
 
+#![allow(non_snake_case)]
 #![allow(dead_code)]
 #![allow(unused_variables)]
 #![allow(unused_imports)]
