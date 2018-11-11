@@ -13,11 +13,13 @@ fn main()
         Instruction::LoadInt(1, 0),
         Instruction::LoadInt(2, 1000000),
         Instruction::LoadInt(4, 1),
+        Instruction::Label(0),
         Instruction::Gt(3, 2, 1),
-        Instruction::JumpT(3, 6),
+        Instruction::GotoT(3, 1),
         Instruction::Ret(1),
+        Instruction::Label(1),
         Instruction::Add(1, 4, 1),
-        Instruction::Jump(3),
+        Instruction::Goto(0),
     ];
     let func = Function::from_instructions(code, 0);
     let obj = machine.pool.allocate(Box::new(func));

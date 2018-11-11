@@ -22,6 +22,8 @@
 #![allow(unused_imports)]
 
 extern crate time;
+extern crate libc;
+
 pub mod frame;
 pub mod function;
 pub mod jit;

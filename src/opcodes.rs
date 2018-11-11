@@ -43,6 +43,13 @@ pub enum Instruction
     /// Jump (R(A) == true ? ip == B : continue)
     JumpT(usize, usize),
 
+    /// Goto
+    ///
+    /// Same as Jump instructions, but uses labels
+    Goto(usize),
+    GotoT(usize,usize),
+    GotoF(usize,usize),
+
     /// Push value from R(A) to arguments stack
     PushArg(usize),
     /// R(A) = B(Args), C - Arg count, args poped from arg stack
@@ -66,6 +73,9 @@ pub enum Instruction
     /// Ret R(A)
     /// return value from R(A)
     Ret(usize),
+
+    /// Create label with id A
+    Label(usize),
 }
 
 use std::fmt;
