@@ -7,6 +7,7 @@ pub struct Machine
     pub stack: Vec<CallFrame>,
     pub pool: ObjectPool,
     pub globals: HashMap<usize, Value>,
+    pub labels: HashMap<usize,usize>,
 }
 
 impl Machine
@@ -17,6 +18,7 @@ impl Machine
             stack: Vec::with_capacity(4096),
             pool: ObjectPool::new(),
             globals: HashMap::new(),
+            labels: HashMap::new(),
         }
     }
 
@@ -80,6 +82,15 @@ impl Machine
 
     pub fn run_code(&mut self, code: Vec<Instruction>) -> Value
     {
+        for (idx,val) in code.iter().enumerate() {
+            match val {
+                Instruction::Label(id) => {
+                    self.labels.insert(*id,idx);
+                }
+                _ => {}
+            }
+        }
+
         self.last_frame_mut().code = code;
         self.last_frame_mut().ip = 0;
 
@@ -101,6 +112,10 @@ impl Machine
             let opcode = self.last_frame().code[self.last_frame().ip].clone();
 
             match &opcode {
+                Instruction::Label(label_id) => {
+                    self.labels.insert(*label_id,self.last_frame().ip);
+                }
+
                 Instruction::PushArg(reg) => {
                     let value = self.get(*reg);
                     self.last_frame_mut().arg_stack.push(value);
@@ -226,6 +241,46 @@ impl Machine
                     };
 
                     self.set(*dest, result);
+                }
+
+                Instruction::Goto(lbl_id) => {
+                    if self.labels.contains_key(lbl_id) {
+                        let idx = self.labels.get(lbl_id).unwrap();
+                        self.branch(*idx);
+                    } else {
+                        panic!("Label with id `{}` doesn't exists",lbl_id);
+                    }
+                }
+
+                Instruction::GotoT(reg,lbl_id) => {
+                    match self.get(*reg) {
+                        Value::Bool(b) => {
+                            if b {
+                                if self.labels.contains_key(lbl_id) {
+                                    let idx = self.labels.get(lbl_id).unwrap();
+                                    self.branch(*idx);
+                                } else {
+                                    panic!("Label with id `{}`,doesn't exists",lbl_id)
+                                }
+                            }
+                        }
+                        _ => unimplemented!(),
+                    }
+                }
+                Instruction::GotoF(reg,lbl_id) => {
+                    match self.get(*reg) {
+                        Value::Bool(b) => {
+                            if !b {
+                                if self.labels.contains_key(lbl_id) {
+                                    let idx = self.labels.get(lbl_id).unwrap();
+                                    self.branch(*idx);
+                                } else {
+                                    panic!("Label with id `{}`,doesn't exists",lbl_id)
+                                }
+                            }
+                        }
+                        _ => unimplemented!(),
+                    }
                 }
 
                 Instruction::Jump(idx) => {
