@@ -98,8 +98,8 @@ impl CallFrame
 {
     pub fn new() -> CallFrame
     {
-        let mut vec = Vec::with_capacity(4095);
-        for _ in 0..4095 {
+        let mut vec = Vec::with_capacity(256);
+        for _ in 0..256 {
             vec.push(Value::Null);
         }
 

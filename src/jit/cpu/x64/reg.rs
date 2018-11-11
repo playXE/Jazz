@@ -1,5 +1,4 @@
-use crate::jit::cpu::{FReg,Reg};
-
+use crate::jit::cpu::{FReg, Reg};
 
 pub const REG_COUNT: usize = 16;
 pub static REG_PARAMS: [Reg; 6] = [RDI, RSI, RDX, RCX, R8, R9];
@@ -54,38 +53,46 @@ pub const XMM13: FReg = FReg(13);
 pub const XMM14: FReg = FReg(14);
 pub const XMM15: FReg = FReg(15);
 
-impl Reg {
+impl Reg
+{
     // these four register need sometimes special treatment: e.g. because of bl vs bh
     // for byte operations
-    pub fn is_basic_reg(self) -> bool {
+    pub fn is_basic_reg(self) -> bool
+    {
         self == RAX || self == RBX || self == RCX || self == RDX
     }
 
-    pub fn int(self) -> u8 {
+    pub fn int(self) -> u8
+    {
         assert!(self != RIP);
 
         self.0
     }
 
-    pub fn msb(self) -> u8 {
+    pub fn msb(self) -> u8
+    {
         assert!(self != RIP);
 
         (self.int() >> 3) & 0x01
     }
 
-    pub fn and7(self) -> u8 {
+    pub fn and7(self) -> u8
+    {
         assert!(self != RIP);
 
         self.int() & 0x07
     }
 }
 
-impl FReg {
-    pub fn msb(self) -> u8 {
+impl FReg
+{
+    pub fn msb(self) -> u8
+    {
         (self.0 >> 3) & 0x01
     }
 
-    pub fn and7(self) -> u8 {
+    pub fn and7(self) -> u8
+    {
         self.0 & 0x07
     }
 }

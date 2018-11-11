@@ -47,8 +47,8 @@ pub enum Instruction
     ///
     /// Same as Jump instructions, but uses labels
     Goto(usize),
-    GotoT(usize,usize),
-    GotoF(usize,usize),
+    GotoT(usize, usize),
+    GotoF(usize, usize),
 
     /// Push value from R(A) to arguments stack
     PushArg(usize),
@@ -169,5 +169,3 @@ impl CodeBlock
         CodeBlock { code: ins, ip: 0 }
     }
 }
-
-

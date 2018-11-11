@@ -1,2 +1,2 @@
-pub mod reg;
 pub mod param;
+pub mod reg;

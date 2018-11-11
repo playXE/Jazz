@@ -147,8 +147,7 @@ impl ObjectPool
         self.alloc_count = 0;
     }
 
-    /// Run the garbage collector with the execution context
-    /// provided by the given call stack.
+    /// GC objects, not implemented
     pub fn collect(&mut self, _stack: &CallStack)
     {
         /*let mut visited: Vec<bool> = vec![false; self.objects.len()];
@@ -182,6 +181,7 @@ impl ObjectPool
                 }
             }
         }*/
+        unimplemented!()
     }
 }
 

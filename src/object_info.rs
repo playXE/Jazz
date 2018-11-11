@@ -66,7 +66,9 @@ impl ObjectInfo
     pub fn handle<'a>(&self) -> ObjectHandle<'a>
     {
         ObjectHandle {
-            object: unsafe { ::std::mem::transmute::<&dyn Object, &'static dyn Object>(&*self.object) },
+            object: unsafe {
+                ::std::mem::transmute::<&dyn Object, &'static dyn Object>(&*self.object)
+            },
             _native_ref_info: self.native_ref_info.clone(),
         }
     }
