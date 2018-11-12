@@ -6,7 +6,7 @@
 //!
 //!
 //! Example code:
-//!```rust
+//!```asm
 //! LoadInt(0,12) // Load 12 into R(0)
 //! LoadInt(1,3)  // Load 13 into R(1)
 //! Add(2,1,0)    // Add value from R(1) to R(0) and store result in R(2)

@@ -146,16 +146,7 @@ impl fmt::Debug for Instruction
 }
 
 ///Trait used for print Vec\<Instruction\>
-///
-/// # Example
-/// ```rust
-/// 0000 LoadInt(0,2)
-/// 0001 Add(0,0,0)
-/// 0002 LoadInt(1,4)
-/// 0003 Gt(2,1,0),
-///
-/// ```
-///
+
 pub trait DebugCode
 {
     #[allow(non_snake_case)]

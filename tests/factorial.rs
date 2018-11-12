@@ -1,12 +1,15 @@
-extern crate time;
+#![feature(test)]
+extern crate test;
 
 extern crate jazz;
+
 use self::opcodes::Instruction;
 use jazz::*;
 
 use self::{function::Function, value::Value};
 
-fn main()
+#[test]
+fn factorial()
 {
     let mut machine = machine::Machine::new();
 
@@ -46,7 +49,13 @@ fn main()
     let fun = Function::from(main_code);
     let fun_v = Value::Object(machine.pool.allocate(Box::new(fun)));
     let v = machine.invoke(fun_v,vec![]);
-    println!("{:?}",v);    
+    let int = if let Value::Long(i) = v {
+        i
+    } else {
+        panic!("");
+    };
+    assert_eq!(479001600,int);  
 }
+
 
 
