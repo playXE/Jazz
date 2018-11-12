@@ -11,6 +11,8 @@ macro_rules! for_c {
     };
 }
 
+
+
 ///Machine that executes code
 pub struct Machine
 {
@@ -92,6 +94,7 @@ impl Machine
 
     pub fn run_code(&mut self, code: Vec<Instruction>) -> Value
     {
+
         for_c!(i = 0;i < code.len();i += 1, {
             match code[i] {
                 Instruction::Label(lbl_id) => {
@@ -100,7 +103,8 @@ impl Machine
                 _ => {}
             };
         });
-
+        
+        
         self.last_frame_mut().code = code;
         self.last_frame_mut().ip = 0;
 
@@ -155,6 +159,10 @@ impl Machine
                         (Value::Float(f), Value::Float(f2)) => Value::Float(f + f2),
                         (Value::Long(i), Value::Long(i2)) => Value::Long(i + i2),
                         (Value::Double(f), Value::Double(f2)) => Value::Double(f + f2),
+                        (Value::Int(i),Value::Long(i2)) => Value::Long((i as i64) + i2),
+                        (Value::Long(i),Value::Int(i2)) => Value::Long(i + (i2 as i64)),
+                        (Value::Float(f),Value::Double(f2)) => Value::Double((f as f64) + f2),
+                        (Value::Double(f),Value::Float(f2)) => Value::Double(f + (f2 as f64)),
                         v => panic!("{:?}", v),
                     };
 
@@ -191,10 +199,14 @@ impl Machine
                     let (v1, v2) = (self.get(*r1), self.get(*r2));
 
                     let result = match (v1, v2) {
-                        (Value::Int(i), Value::Int(i2)) => Value::Int(i * i2),
-                        (Value::Float(f), Value::Float(f2)) => Value::Float(f * f2),
-                        (Value::Long(i), Value::Long(i2)) => Value::Long(i * i2),
-                        (Value::Double(f), Value::Double(f2)) => Value::Double(f * f2),
+                        (Value::Int(i), Value::Int(i2)) => Value::Int(i - i2),
+                        (Value::Float(f), Value::Float(f2)) => Value::Float(f - f2),
+                        (Value::Long(i), Value::Long(i2)) => Value::Long(i - i2),
+                        (Value::Double(f), Value::Double(f2)) => Value::Double(f - f2),
+                        (Value::Int(i),Value::Long(i2)) => Value::Long((i as i64) - i2),
+                        (Value::Long(i),Value::Int(i2)) => Value::Long(i - (i2 as i64)),
+                        (Value::Float(f),Value::Double(f2)) => Value::Double((f as f64) - f2),
+                        (Value::Double(f),Value::Float(f2)) => Value::Double(f - (f2 as f64)),
                         _ => unimplemented!(),
                     };
 
@@ -209,6 +221,10 @@ impl Machine
                         (Value::Float(f), Value::Float(f2)) => Value::Float(f / f2),
                         (Value::Long(i), Value::Long(i2)) => Value::Long(i / i2),
                         (Value::Double(f), Value::Double(f2)) => Value::Double(f / f2),
+                        (Value::Int(i),Value::Long(i2)) => Value::Long((i as i64) / i2),
+                        (Value::Long(i),Value::Int(i2)) => Value::Long(i / (i2 as i64)),
+                        (Value::Float(f),Value::Double(f2)) => Value::Double((f as f64) / f2),
+                        (Value::Double(f),Value::Float(f2)) => Value::Double(f / (f2 as f64)),
                         _ => unimplemented!(),
                     };
 
@@ -223,6 +239,10 @@ impl Machine
                         (Value::Float(f), Value::Float(f2)) => Value::Float(f * f2),
                         (Value::Long(i), Value::Long(i2)) => Value::Long(i * i2),
                         (Value::Double(f), Value::Double(f2)) => Value::Double(f * f2),
+                        (Value::Int(i),Value::Long(i2)) => Value::Long((i as i64) * i2),
+                        (Value::Long(i),Value::Int(i2)) => Value::Long(i * (i2 as i64)),
+                        (Value::Float(f),Value::Double(f2)) => Value::Double((f as f64) * f2),
+                        (Value::Double(f),Value::Float(f2)) => Value::Double(f * (f2 as f64)),
                         _ => unimplemented!(),
                     };
 
@@ -240,6 +260,10 @@ impl Machine
                         (Value::Long(i), Value::Long(i2)) => Value::Bool(i > i2),
                         (Value::Float(f), Value::Float(f2)) => Value::Bool(f > f2),
                         (Value::Double(f), Value::Double(f2)) => Value::Bool(f > f2),
+                        (Value::Int(i),Value::Long(i2)) => Value::Bool((i as i64) >i2),
+                        (Value::Long(i),Value::Int(i2)) => Value::Bool(i > (i2 as i64)),
+                        (Value::Float(f),Value::Double(f2)) => Value::Bool((f as f64) > f2),
+                        (Value::Double(f),Value::Float(f2)) => Value::Bool(f > (f2 as f64)),
                         _ => unimplemented!(),
                     };
 
@@ -253,10 +277,31 @@ impl Machine
                         (Value::Long(i), Value::Long(i2)) => Value::Bool(i < i2),
                         (Value::Float(f), Value::Float(f2)) => Value::Bool(f < f2),
                         (Value::Double(f), Value::Double(f2)) => Value::Bool(f < f2),
+                        (Value::Int(i),Value::Long(i2)) => Value::Bool((i as i64) < i2),
+                        (Value::Long(i),Value::Int(i2)) => Value::Bool(i < (i2 as i64)),
+                        (Value::Float(f),Value::Double(f2)) => Value::Bool((f as f64) < f2),
+                        (Value::Double(f),Value::Float(f2)) => Value::Bool(f < (f2 as f64)),
                         _ => unimplemented!(),
                     };
 
                     self.set(*dest, result);
+                }
+
+                Instruction::Eq(r3,r1,r2) => {
+                    let (v1,v2) = (self.get(*r1),self.get(*r2));
+                    let result = match (v1,v2) {
+                        (Value::Int(i),Value::Int(i2)) => Value::Bool(i == i2),
+                        (Value::Long(i),Value::Long(i2)) => Value::Bool(i == i2),
+                        (Value::Float(f),Value::Float(f2)) => Value::Bool(f == f2),
+                        (Value::Double(f),Value::Double(f2)) => Value::Bool(f == f2),
+                        (Value::Int(i),Value::Long(i2)) => Value::Bool((i as i64) == i2),
+                        (Value::Long(i),Value::Int(i2)) => Value::Bool(i == (i2 as i64)),
+                        (Value::Float(f),Value::Double(f2)) => Value::Bool((f as f64) == f2),
+                        (Value::Double(f),Value::Float(f2)) => Value::Bool(f == (f2 as f64)),
+                        _ => unimplemented!(),
+                    };
+
+                    self.set(*r3,result);
                 }
 
                 Instruction::Goto(lbl_id) => {
