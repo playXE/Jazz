@@ -1,9 +1,11 @@
 # Jazz Virtual Machine
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/playXE/Jazz/blob/master/LICENSE)
 [![Docs Status](https://docs.rs/jazz/badge.svg)](https://docs.rs/jazz)
+
+
 Jazz is a register-based virtual machine
 
-Jazz is still in active develop so it's not recommended to use Jazz for your purposes
+VM is still in active develop so it's not recommended to use Jazz for your purposes
 
 # Example code:
 ```rust
