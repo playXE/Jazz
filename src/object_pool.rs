@@ -43,6 +43,7 @@ impl ObjectPool
         id
     }
 
+    #[allow(dead_code)]
     fn deallocate(&mut self, id: usize)
     {
         let objects = &mut self.objects;

@@ -1,6 +1,6 @@
 [[package]]
 name = "jazz"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "libc 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)",
  "time 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)",

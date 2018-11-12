@@ -1,6 +1,4 @@
-use crate::{
-    opcodes::{CodeBlock, Instruction}, value::Value
-};
+use crate::{opcodes::Instruction, value::Value};
 
 ///CallFrame
 /// Stores register values, Blocks of code, registers and arguments stack

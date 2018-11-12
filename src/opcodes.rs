@@ -138,6 +138,7 @@ impl fmt::Debug for Instruction
 ///
 pub trait DebugCode
 {
+    #[allow(non_snake_case)]
     fn toString(&self) -> String;
 }
 

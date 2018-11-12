@@ -348,6 +348,40 @@ impl Machine
                     returns = true;
                 }
 
+                Instruction::LoadAt(r1, r2, r3) => {
+                    let v2 = self.get(*r2);
+                    let v3 = self.get(*r3);
+                    let this = self
+                        .last_frame_mut()
+                        .arg_stack
+                        .pop()
+                        .expect("No value to pop; LoadAt");
+                    if let Value::Object(obj_id) = v2 {
+                        let obj = self.pool.get(obj_id);
+                        obj.load_at(self, vec![this, v3], *r1);
+                    } else {
+                        panic!("Expected Object value");
+                    }
+                }
+
+                Instruction::StoreAt(r1, r2, r3) => {
+                    let value = self.get(*r1);
+                    let target = self.get(*r2);
+                    let key = self.get(*r3);
+
+                    let this = self
+                        .last_frame_mut()
+                        .arg_stack
+                        .pop()
+                        .expect("No value to pop; StoreAt");
+                    if let Value::Object(obj_id) = target {
+                        let obj = self.pool.get(obj_id);
+                        obj.store_at(self, vec![this, key, value], 0);
+                    } else {
+                        panic!("Expected Object value");
+                    }
+                }
+
                 _ => unimplemented!(),
             }
             self.dispatch();

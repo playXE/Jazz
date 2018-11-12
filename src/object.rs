@@ -12,17 +12,17 @@ pub trait Object: Send
     {
     }
 
-    fn call(&self, m: &mut Machine, args: Vec<Value>) -> Value
+    fn call(&self, _m: &mut Machine, _args: Vec<Value>) -> Value
     {
         Value::Null
     }
 
-    fn store_at(&self, m: &mut Machine, args: Vec<Value>, rindex: usize)
+    fn store_at(&self, _m: &mut Machine, _args: Vec<Value>, _rindex: usize)
     {
         panic!("Cannot store_at");
     }
 
-    fn load_at(&self, m: &mut Machine, args: Vec<Value>, rindex: usize)
+    fn load_at(&self, _m: &mut Machine, _args: Vec<Value>, _rindex: usize)
     {
         panic!("Cannot load_at");
     }

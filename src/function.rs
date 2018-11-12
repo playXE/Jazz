@@ -1,6 +1,4 @@
-use crate::{
-    frame::CallFrame, machine::Machine, object::Object, object_pool::ObjectPool, opcodes::*, value::Value
-};
+use crate::{machine::Machine, object::Object, opcodes::*, value::Value};
 use std::any::Any;
 
 #[derive(Debug)]
