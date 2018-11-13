@@ -27,20 +27,25 @@ impl Object for Function
     }
 
     /// Call object
-    fn call(&self, m: &mut Machine, args: Vec<Value>) -> Value
+    fn call(&self, m: &mut Machine, args: Vec<Value>, c_index: u8) -> Value
     {
-        match self {
-            Function::Virtual(ref vf) => {
-                let func = vf.clone();
+        if c_index == 0 {
+            let ret = match self {
+                Function::Virtual(ref vf) => {
+                    let func = vf.clone();
 
-                for i in 0..args.len() {
-                    m.last_frame_mut().stack[i] = args[i];
+                    for i in 0..args.len() {
+                        m.last_frame_mut().stack[i] = args[i];
+                    }
+
+                    m.run_code(func.code)
                 }
 
-                m.run_code(func.code)
-            }
-
-            Function::Native(nv) => nv.invoke(m, args),
+                Function::Native(nv) => nv.invoke(m, args),
+            };
+            return ret;
+        } else {
+            panic!("Function expect CALL idnex,found `{}`", c_index);
         }
     }
 }

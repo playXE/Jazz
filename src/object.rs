@@ -12,7 +12,7 @@ pub trait Object: Send
     {
     }
 
-    fn call(&self, _m: &mut Machine, _args: Vec<Value>) -> Value
+    fn call(&self, _m: &mut Machine, _args: Vec<Value>, _c_index: u8) -> Value
     {
         Value::Null
     }

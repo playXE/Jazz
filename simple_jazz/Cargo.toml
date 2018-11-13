@@ -1,0 +1,11 @@
+[package]
+name = "simple_jazz"
+version = "0.1.0"
+authors = ["Adel Prokurov <adel.prokurov@protonmail.com>"]
+edition = "2018"
+description = "Library used for simple code generation for JazzVM"
+license = "MIT"
+keywords = ["codegen","vm"]
+
+[dependencies]
+jazz = "0.1.89"

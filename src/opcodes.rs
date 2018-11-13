@@ -1,50 +1,52 @@
 #[derive(Clone)]
 pub enum Instruction
 {
+    LoadBool(usize,bool),
+
     ///LoadInt R(A) = B
-    /// 
+    ///
     /// Loading integer value B to register A
     LoadInt(usize, i32),
     ///LoadLong R(A) = B
-    /// 
+    ///
     /// Loading long value B to register A
     LoadLong(usize, i64),
     ///LoadFloat R(A) = B
-    /// 
+    ///
     /// Loading float value B to register A
     LoadFloat(usize, f32),
     /// LoadDouble R(A) = B
-    /// 
+    ///
     /// Loading double value B to register A
     LoadDouble(usize, f64),
     LoadObject(usize, usize),
     /// LoadConst R(A) = C(B)
-    /// 
+    ///
     /// Load constant from object pool to register A
     LoadConst(usize, usize),
     /// LoadGlobal R(A) = G(B)
-    /// 
+    ///
     /// Load global value B into register A
     LoadGlobal(usize, usize),
     /// LoadAt R(A) = R(B)\[C\]
-    /// 
+    ///
     /// Load C from B and store in A
     LoadAt(usize, usize, usize),
     /// LoadSuper R(A) = R(B)\[C\]
-    /// 
+    ///
     /// Load C from B and store in A
     LoadSuper(usize, usize, usize),
     /// Move R(A) = R(B)
-    /// 
+    ///
     /// Move register
     Move(usize, usize),
     /// Store R(B)\[C\] = A
-    /// 
+    ///
     /// Store A into R(B)\[C\]
     Store(usize, usize, usize),
     StoreAt(usize, usize, usize),
     /// StoreGlobal G(A) = R(B)
-    /// 
+    ///
     /// Store global
     StoreGlobal(usize, usize),
     /// Jump IP
@@ -79,18 +81,18 @@ pub enum Instruction
     ///Lt R(A) = R(B) < R(C)
     Lt(usize, usize, usize),
     /// Ge R(A) = R(B) >= R(C)
-    Ge(usize,usize,usize),
+    Ge(usize, usize, usize),
     /// Le R(A) = R(B) <= R(C)
-    Le(usize,usize,usize),
+    Le(usize, usize, usize),
 
     /// Eq R(A) = R(B) == R(C)
-    Eq(usize,usize,usize),
+    Eq(usize, usize, usize),
     /// Ret0
-    /// 
+    ///
     /// return null value
     Ret0,
     /// Ret R(A)
-    /// 
+    ///
     /// return value from R(A)
     Ret(usize),
 

@@ -16,3 +16,20 @@ Ret(2)        // Return value from R(2)
  ```
 
 Jazz is heavily inspired by [Gravity](https://marcobambini.github.io/gravity/#/) language VM
+
+
+# Simple Jazz
+
+Library used for easy generating JazzVM code,example:
+```rust
+fn add_op(node: Node,b: &mut FunctionBuilder) {
+    visit(node.left,b);
+    visit(node.right,b);
+    let r3 = b.register_pop();
+    let r2 = b.register_pop();
+    let r1 = b.register_push_temp();
+    b.insert_op(Instruction::Add(r1,r2,r3));
+}
+
+
+```
