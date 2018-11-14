@@ -8,5 +8,5 @@ license = "MIT"
 keywords = ["codegen","vm"]
 
 [dependencies]
-jazz = "*"
-mex = {git = "https://github.com/zac-garby/mex"}
+jazz = "0.1"
+mex = "0.1.0"
