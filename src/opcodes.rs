@@ -1,7 +1,7 @@
 #[derive(Clone)]
 pub enum Instruction
 {
-    LoadBool(usize,bool),
+    LoadBool(usize, bool),
 
     ///LoadInt R(A) = B
     ///

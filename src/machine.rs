@@ -131,8 +131,8 @@ impl Machine
                     self.last_frame_mut().arg_stack.push(value);
                 }
 
-                Instruction::LoadBool(dest,boolean) => {
-                    self.set(*dest,Value::Bool(*boolean));
+                Instruction::LoadBool(dest, boolean) => {
+                    self.set(*dest, Value::Bool(*boolean));
                 }
 
                 Instruction::LoadInt(dest, int) => {
@@ -331,7 +331,7 @@ impl Machine
                                 self.branch(*idx);
                             } else {
                                 panic!("Label with id `{}`,doesn't exists", lbl_id)
-                            } 
+                            }
                         }
                     }
 
@@ -342,9 +342,9 @@ impl Machine
                                 self.branch(*idx);
                             } else {
                                 panic!("Label with id `{}`,doesn't exists", lbl_id)
-                            } 
+                            }
                         }
-                    } 
+                    }
                     Value::Float(f) => {
                         if f > 0.0 {
                             if self.labels.contains_key(lbl_id) {
@@ -352,7 +352,7 @@ impl Machine
                                 self.branch(*idx);
                             } else {
                                 panic!("Label with id `{}`,doesn't exists", lbl_id)
-                            } 
+                            }
                         }
                     }
                     Value::Double(f) => {
@@ -362,7 +362,7 @@ impl Machine
                                 self.branch(*idx);
                             } else {
                                 panic!("Label with id `{}`,doesn't exists", lbl_id)
-                            } 
+                            }
                         }
                     }
                     _ => unimplemented!(),
@@ -454,15 +454,9 @@ impl Machine
                     let value = self.get(*r1);
                     let target = self.get(*r2);
                     let key = self.get(*r3);
-
-                    let this = self
-                        .last_frame_mut()
-                        .arg_stack
-                        .pop()
-                        .expect("No value to pop; StoreAt");
                     if let Value::Object(obj_id) = target {
                         let obj = self.pool.get(obj_id);
-                        obj.store_at(self, vec![this, key, value], 0);
+                        obj.call(self, vec![key, value], index::STORE_AT);
                     } else {
                         panic!("Expected Object value");
                     }

@@ -19,7 +19,8 @@
 #![warn(rust_2018_idioms)]
 #![feature(test)]
 
-#[macro_use]extern crate failure;
+#[macro_use]
+extern crate failure;
 
 pub mod frame;
 pub mod function;
@@ -32,6 +33,5 @@ pub mod object_pool;
 pub mod opcodes;
 pub mod static_root;
 pub mod value;
-pub mod ir;
 
 use time;
