@@ -1,6 +1,6 @@
 [package]
 name = "jazz"
-version = "0.1.89"
+version = "0.1.90"
 authors = ["Adel Prokurov <adel.prokurov@protonmail.com>"]
 edition = "2018"
 description = "Jazz Virtual Machine"
