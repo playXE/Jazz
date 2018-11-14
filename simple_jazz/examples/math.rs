@@ -14,8 +14,8 @@ pub fn translate(node: Node,builder: &mut FunctionBuilder) {
             builder.dconst(num);
         }
         Node::Infix{left,right,op} => {
-            translate(*right, builder);
             translate(*left, builder);
+            translate(*right, builder);
 
             let r1 = builder.register_pop();
             let r2 = builder.register_pop();
@@ -25,16 +25,16 @@ pub fn translate(node: Node,builder: &mut FunctionBuilder) {
 
             match op {
                 "+" => {
-                    builder.insert_op(Instruction::Add(dest,r1,r2));
+                    builder.insert_op(Instruction::Add(dest,r2,r1));
                 }
                 "-" => {
-                    builder.insert_op(Instruction::Sub(dest,r1,r2));
+                    builder.insert_op(Instruction::Sub(dest,r2,r1));
                 }
                 "*" => {
-                    builder.insert_op(Instruction::Mul(dest,r1,r2));
+                    builder.insert_op(Instruction::Mul(dest,r2,r1));
                 }
                 "/" => {
-                    builder.insert_op(Instruction::Div(dest,r1,r2));
+                    builder.insert_op(Instruction::Div(dest,r2,r1));
                 }
                 _ => unimplemented!(),
             }

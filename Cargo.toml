@@ -1,6 +1,6 @@
 [package]
 name = "jazz"
-version = "0.1.90"
+version = "0.1.91"
 authors = ["Adel Prokurov <adel.prokurov@protonmail.com>"]
 edition = "2018"
 description = "Jazz Virtual Machine"
@@ -19,4 +19,4 @@ lto = true
 time = "0.1.40"
 libc = "0.2.43"
 
-simple_jazz = {path = "simple_jazz"}
+simple_jazz = "0.1.0"

@@ -1,18 +1,18 @@
 [[package]]
 name = "jazz"
 version = "0.1.90"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)",
- "simple_jazz 0.1.0",
  "time 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "jazz"
-version = "0.1.90"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+version = "0.1.91"
 dependencies = [
  "libc 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)",
+ "simple_jazz 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "time 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -34,6 +34,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "simple_jazz"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "jazz 0.1.90 (registry+https://github.com/rust-lang/crates.io-index)",
  "mex 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -73,6 +74,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum libc 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)" = "76e3a3ef172f1a0b9a9ff0dd1491ae5e6c948b94479a3021819ba7d860c8645d"
 "checksum mex 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "f0a461e8655cd076eca1d35f44842ad93905c752ad394e78bb01493fc2340a19"
 "checksum redox_syscall 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)" = "c214e91d3ecf43e9a4e41e578973adeb14b474f2bee858742d127af75a0112b1"
+"checksum simple_jazz 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "3ac1d665259d4d518d74bec18fb77bcb3361cb906acd15881abd482dbf0d7960"
 "checksum time 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)" = "d825be0eb33fda1a7e68012d51e9c7f451dc1a69391e7fdc197060bb8c56667b"
 "checksum winapi 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)" = "92c1eb33641e276cfa214a0522acad57be5c56b10cb348b3c5117db75f3ac4b0"
 "checksum winapi-i686-pc-windows-gnu 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ac3b87c63620426dd9b991e5ce0329eff545bccbbb34f3be09ff6fb6ab51b7b6"
