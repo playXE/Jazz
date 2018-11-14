@@ -19,9 +19,6 @@
 #![warn(rust_2018_idioms)]
 #![feature(test)]
 
-#[macro_use]
-extern crate failure;
-
 pub mod frame;
 pub mod function;
 pub mod index;

@@ -456,7 +456,7 @@ impl Machine
                     let key = self.get(*r3);
                     if let Value::Object(obj_id) = target {
                         let obj = self.pool.get(obj_id);
-                        obj.call(self, vec![key, value], index::STORE_AT);
+                        obj.call(self, vec![key, value], super::index::STORE_AT);
                     } else {
                         panic!("Expected Object value");
                     }
