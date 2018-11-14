@@ -48,25 +48,25 @@ impl FunctionBuilder {
         self.list.push(op);
     }
 
-    pub fn emit_iconst(&mut self,i: i32) -> usize {
+    pub fn iconst(&mut self, i: i32) -> usize {
         let register = self.register_push_temp();
         self.list.push(Instruction::LoadInt(register,i));
         register
     }
 
-    pub fn emit_lconst(&mut self,l: i64) -> usize {
+    pub fn lconst(&mut self, l: i64) -> usize {
         let register = self.register_push_temp();
         self.list.push(Instruction::LoadLong(register,l));
         register
     }
 
-    pub fn emit_dconst(&mut self,f: f64) -> usize {
+    pub fn dconst(&mut self, f: f64) -> usize {
         let register = self.register_push_temp();
         self.list.push(Instruction::LoadDouble(register,f));
         register
     }
 
-    pub fn emit_fconst(&mut self,f: f32) -> usize {
+    pub fn fconst(&mut self, f: f32) -> usize {
         let register = self.register_push_temp();
         self.list.push(Instruction::LoadFloat(register,f));
         register
@@ -141,4 +141,43 @@ impl FunctionBuilder {
     pub fn register_last(&self) -> usize {
         self.registers.last().unwrap().clone()
     }
+}
+
+
+pub trait Load<T> {
+    fn load(f: &mut FunctionBuilder,v: T) -> usize;
+}
+
+impl Load<i32> for i32 {
+    fn load(f: &mut FunctionBuilder,v: i32) -> usize {
+        let reg = f.iconst(v);
+        reg
+    }
+}
+
+
+impl Load<i64> for i32 {
+    fn load(f: &mut FunctionBuilder,v: i64) -> usize {
+        let reg = f.lconst(v);
+        reg
+    }
+}
+
+impl Load<f32> for f32 {
+    fn load(f: &mut FunctionBuilder,v: f32) -> usize {
+        let reg = f.fconst(v);
+        reg
+    }
+}
+
+impl Load<f64> for f64 {
+    fn load(f: &mut FunctionBuilder, v: f64) -> usize {
+        let reg = f.dconst(v);
+        reg
+    }
+}
+
+
+pub trait InstBuilder<T: Load<T>> {
+
 }

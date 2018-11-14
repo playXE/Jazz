@@ -19,3 +19,4 @@ lto = true
 time = "0.1.40"
 libc = "0.2.43"
 
+simple_jazz = {path = "simple_jazz"}

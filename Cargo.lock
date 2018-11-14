@@ -3,6 +3,16 @@ name = "jazz"
 version = "0.1.90"
 dependencies = [
  "libc 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)",
+ "simple_jazz 0.1.0",
+ "time 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "jazz"
+version = "0.1.90"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "libc 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)",
  "time 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -12,9 +22,22 @@ version = "0.2.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "mex"
+version = "0.1.0"
+source = "git+https://github.com/zac-garby/mex#2e9c0b3f7a77a4fdb493b0eb1c7a48f3775fdf10"
+
+[[package]]
 name = "redox_syscall"
 version = "0.1.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "simple_jazz"
+version = "0.1.0"
+dependencies = [
+ "jazz 0.1.90 (registry+https://github.com/rust-lang/crates.io-index)",
+ "mex 0.1.0 (git+https://github.com/zac-garby/mex)",
+]
 
 [[package]]
 name = "time"
@@ -46,7 +69,9 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [metadata]
+"checksum jazz 0.1.90 (registry+https://github.com/rust-lang/crates.io-index)" = "e483948c1c3f7d6877393451cd973c87517828eaf117b231c61b6e3dbdf6f13b"
 "checksum libc 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)" = "76e3a3ef172f1a0b9a9ff0dd1491ae5e6c948b94479a3021819ba7d860c8645d"
+"checksum mex 0.1.0 (git+https://github.com/zac-garby/mex)" = "<none>"
 "checksum redox_syscall 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)" = "c214e91d3ecf43e9a4e41e578973adeb14b474f2bee858742d127af75a0112b1"
 "checksum time 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)" = "d825be0eb33fda1a7e68012d51e9c7f451dc1a69391e7fdc197060bb8c56667b"
 "checksum winapi 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)" = "92c1eb33641e276cfa214a0522acad57be5c56b10cb348b3c5117db75f3ac4b0"
