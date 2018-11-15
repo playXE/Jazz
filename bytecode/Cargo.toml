@@ -1,0 +1,11 @@
+[package]
+name = "jazz_bytecode"
+version = "0.1.0"
+authors = ["Adel Prokurov <adel.prokurov@protonmail.com>"]
+edition = "2018"
+description = "Library used for encoding/decoding JazzVM instructions"
+license = "MIT"
+keywords = ["codegen","vm","encoding","decoding"]
+
+[dependencies]
+jazz = "0.2.0"

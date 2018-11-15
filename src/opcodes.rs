@@ -162,6 +162,9 @@ impl fmt::Debug for Instruction
             Instruction::GotoT(reg, lbl_id) => {
                 write!(f, "GotoT R({}) is true ? ip = {:02}", reg, lbl_id)
             }
+            Instruction::Move(reg1,reg2) => {
+                write!(f, "Move R({}) = R({})",reg1,reg2)
+            }
             _v => write!(f, "Unimplemented!"),
         }
     }
