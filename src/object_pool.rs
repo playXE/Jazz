@@ -1,14 +1,12 @@
 use crate::{
-    frame::CallStack, object::Object, object_info::{ObjectHandle, ObjectInfo, TypedObjectHandle}, static_root::StaticRoot, value::Value
+    object::Object, object_info::{ObjectHandle, ObjectInfo, TypedObjectHandle}, static_root::StaticRoot
 };
-use std::collections::HashMap;
 
 /// An object pool that provides the backing object storage for executors.
 pub struct ObjectPool
 {
     objects: Vec<Option<ObjectInfo>>,
     object_idx_pool: Vec<usize>,
-    static_objects: HashMap<String, Value>,
     alloc_count: usize,
 }
 
@@ -19,7 +17,6 @@ impl ObjectPool
         ObjectPool {
             objects: vec![Some(ObjectInfo::new(Box::new(StaticRoot::new())))],
             object_idx_pool: vec![],
-            static_objects: HashMap::new(),
             alloc_count: 0,
         }
     }
@@ -116,28 +113,6 @@ impl ObjectPool
         self.get_direct_typed(0).unwrap()
     }
 
-    pub fn set_static_object<K: ToString>(&mut self, key: K, obj: Value)
-    {
-        let key = key.to_string();
-
-        // Replacing static objects is denied to ensure
-        // `get_static_object_ref` is safe.
-        if self.static_objects.get(key.as_str()).is_some() {
-            panic!("A static object with the same key already exists");
-        }
-
-        if let Value::Object(id) = obj {
-            self.get_static_root().append_child(id);
-        }
-        self.static_objects.insert(key, obj);
-    }
-
-    pub fn get_static_object<K: AsRef<str>>(&self, key: K) -> Option<&Value>
-    {
-        let key = key.as_ref();
-        self.static_objects.get(key)
-    }
-
     pub fn get_alloc_count(&self) -> usize
     {
         self.alloc_count
@@ -146,43 +121,6 @@ impl ObjectPool
     pub fn reset_alloc_count(&mut self)
     {
         self.alloc_count = 0;
-    }
-
-    /// GC objects, not implemented
-    pub fn collect(&mut self, _stack: &CallStack)
-    {
-        /*let mut visited: Vec<bool> = vec![false; self.objects.len()];
-        
-        let mut dfs: Vec<usize> = Vec::new();
-        dfs.push(0); // static root
-        
-        for id in stack.collect_objects() {
-            dfs.push(id);
-        }
-        
-        while !dfs.is_empty() {
-            let id = dfs.pop().unwrap();
-        
-            if visited[id] {
-                continue;
-            }
-            visited[id] = true;
-        
-            let obj = &self.objects[id].as_ref().unwrap();
-            for child in obj.as_object().get_children() {
-                dfs.push(child);
-            }
-        }
-        
-        for i in 0..visited.len() {
-            if self.objects[i].is_some() && !visited[i] {
-                if !self.objects[i].as_ref().unwrap().has_native_refs() {
-                    self.objects[i].as_mut().unwrap().gc_notify();
-                    self.deallocate(i);
-                }
-            }
-        }*/
-        unimplemented!()
     }
 }
 

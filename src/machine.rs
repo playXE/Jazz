@@ -207,8 +207,8 @@ impl Machine
                         (Value::Long(i), Value::Int(i2)) => Value::Long(i - (i2 as i64)),
                         (Value::Float(f), Value::Double(f2)) => Value::Double((f as f64) - f2),
                         (Value::Double(f), Value::Float(f2)) => Value::Double(f - (f2 as f64)),
-                        (v,Value::Null) => v,
-                        (Value::Null,v) => v,
+                        (v, Value::Null) => v,
+                        (Value::Null, v) => v,
                         _ => unimplemented!(),
                     };
 
@@ -458,7 +458,7 @@ impl Machine
                     let key = self.get(*r3);
                     if let Value::Object(obj_id) = &target {
                         let obj = self.pool.get(*obj_id);
-                        obj.store_at(self,vec![target,key,value], 0);;
+                        obj.store_at(self, vec![target, key, value], 0);;
                     } else {
                         panic!("Expected Object value");
                     }

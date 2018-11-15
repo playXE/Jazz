@@ -33,7 +33,8 @@ pub mod value;
 
 use time;
 
-pub mod prelude {
+pub mod prelude
+{
     #[allow(unused_extern_crates)]
     extern crate simple_jazz;
     #[allow(unused_imports)]
