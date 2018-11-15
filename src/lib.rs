@@ -35,8 +35,6 @@ use time;
 
 pub mod prelude
 {
-    #[allow(unused_extern_crates)]
-    extern crate simple_jazz;
     #[allow(unused_imports)]
-    use simple_jazz::*;
+    use super::*;
 }
