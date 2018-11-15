@@ -81,8 +81,8 @@ impl Object for TestObject {
 }
 
 use self::opcodes::Instruction::*;
-
-fn main()
+#[test]
+fn load_at_and_store_at()
 {
     let mut m = Machine::new();
 
@@ -101,5 +101,11 @@ fn main()
     let func = self::function::Function::from(code);
     let func = m.pool.allocate(Box::new(func));
 
-    println!("{:?}",m.invoke(Value::Object(func),vec![]));
+    let value = m.invoke(Value::Object(func),vec![]);
+
+    if let Value::Float(f) = value {
+        assert_eq!(f,2.6);
+    } else {
+        panic!("");
+    }
 }

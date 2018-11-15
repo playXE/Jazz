@@ -1,6 +1,10 @@
 #[derive(Clone)]
 pub enum Instruction
 {
+
+    /// LoadBool R(A) = B
+    /// 
+    /// Loading bool value B to register A
     LoadBool(usize, bool),
 
     ///LoadInt R(A) = B
@@ -140,9 +144,30 @@ impl fmt::Debug for Instruction
                 write!(f, "LoadObject R({}) = P({})", dest, pool_id)
             }
             Instruction::Lt(reg3, reg2, reg1) => {
-                write!(f, "Lt R({}) = R({} < R({})", reg3, reg2, reg1)
+                write!(f, "Lt R({}) = R({}) < R({})", reg3, reg2, reg1)
             }
-            _ => write!(f, "unimplemented!"),
+            Instruction::Eq(reg3, reg2, reg1) => {
+                write!(f, "Lt R({}) = R({}) == R({})", reg3, reg2, reg1)
+            }
+            Instruction::Ge(reg3, reg2, reg1) => {
+                write!(f, "Lt R({}) = R({}) >= R({})", reg3, reg2, reg1)
+            }
+            Instruction::Le(reg3, reg2, reg1) => {
+                write!(f, "Lt R({}) = R({}) <= R({})", reg3, reg2, reg1)
+            }
+            Instruction::Label(id) => {
+                write!(f,"Label({:02})",id)
+            }
+            Instruction::Goto(lbl_id) => {
+                write!(f, "Goto {:02}",lbl_id)
+            }
+            Instruction::GotoF(reg,lbl_id) => {
+                write!(f, "GotoF R({}) is false ? ip = {:02}",reg,lbl_id)
+            }
+            Instruction::GotoT(reg,lbl_id) => {
+                write!(f, "GotoT R({}) is true ? ip = {:02}",reg,lbl_id)
+            }
+            _v => write!(f, "Unimplemented!"),
         }
     }
 }
