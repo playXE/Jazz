@@ -8,6 +8,8 @@ pub enum Function
     Native(NativeFunction),
 }
 
+impl crate::object::ObjectAddon for Function {}
+
 impl Object for Function
 {
     fn as_any(&self) -> &dyn Any

@@ -26,8 +26,10 @@ impl TestObject
     }
 }
 
-use self::{machine::Machine, object::Object, object_pool::ObjectPool, value::Value};
+use self::{machine::Machine, object::Object, object_pool::ObjectPool, value::Value,object::ObjectAddon};
 use std::any::Any;
+
+impl ObjectAddon for TestObject {}
 
 impl Object for TestObject
 {

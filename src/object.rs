@@ -1,7 +1,7 @@
 use crate::{machine::Machine, object_pool::ObjectPool, value::Value};
 use std::any::Any;
 
-pub trait Object: Send
+pub trait Object: Send + ObjectAddon
 {
     fn typename(&self) -> String
     {
@@ -32,4 +32,16 @@ pub trait Object: Send
     fn as_any_mut(&mut self) -> &mut dyn Any;
 
     fn get_children(&self) -> Vec<usize>;
+}
+
+
+pub trait ObjectAddon {
+    fn to_string(&self) -> String {String::new()}
+
+    fn to_int(&self) -> i32 {0}
+
+    fn to_long(&self) -> i64 {0}
+
+    fn to_float(&self) -> f32 {0.0}
+    fn to_double(&self) -> f64 {0.0}
 }

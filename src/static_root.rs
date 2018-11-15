@@ -1,10 +1,13 @@
 use crate::object::Object;
 use std::{any::Any, cell::RefCell};
+use crate::object::ObjectAddon;
 
 pub struct StaticRoot
 {
     children: RefCell<Vec<usize>>,
 }
+
+impl ObjectAddon for StaticRoot {}
 
 impl Object for StaticRoot
 {
