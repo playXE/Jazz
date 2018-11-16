@@ -1,6 +1,5 @@
-use crate::object::Object;
+use crate::object::{Object, ObjectAddon};
 use std::{any::Any, cell::RefCell};
-use crate::object::ObjectAddon;
 
 pub struct StaticRoot
 {

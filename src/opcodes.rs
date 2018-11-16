@@ -101,6 +101,12 @@ pub enum Instruction
 
     /// Create label with id A
     Label(usize),
+
+    BitOr(usize, usize, usize),
+    BitXor(usize, usize, usize),
+    BitAnd(usize, usize, usize),
+    And(usize, usize, usize),
+    Or(usize, usize, usize),
 }
 
 use std::fmt;
@@ -162,8 +168,12 @@ impl fmt::Debug for Instruction
             Instruction::GotoT(reg, lbl_id) => {
                 write!(f, "GotoT R({}) is true ? ip = {:02}", reg, lbl_id)
             }
-            Instruction::Move(reg1,reg2) => {
-                write!(f, "Move R({}) = R({})",reg1,reg2)
+            Instruction::Move(reg1, reg2) => write!(f, "Move R({}) = R({})", reg1, reg2),
+            Instruction::LoadAt(dest, target, idx) => {
+                write!(f, "LoadAt R({}) = R({})[R({})]", dest, target, idx)
+            }
+            Instruction::StoreAt(dest, target, idx) => {
+                write!(f, "StoreAt R({})[{}] = R({})", target, idx, dest)
             }
             _v => write!(f, "Unimplemented!"),
         }
