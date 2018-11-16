@@ -6,7 +6,8 @@ use jazz::machine::Machine;
 use jazz::value::Value;
 
 
-fn main() {
+#[test]
+fn load_at() {
     
         let mut machine = Machine::new();
         let string = machine.pool.allocate(Box::new(String::from("disassemble")));

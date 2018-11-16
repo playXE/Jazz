@@ -30,6 +30,7 @@ pub mod object_pool;
 pub mod opcodes;
 pub mod static_root;
 pub mod value;
+pub mod string;
 
 use time;
 

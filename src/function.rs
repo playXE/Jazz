@@ -28,6 +28,36 @@ impl Object for Function
         vec![]
     }
 
+    fn load_at(&self,m: &mut Machine, _args: Vec<Value>,dest: usize) {
+        let _this = _args[0];
+        let val = if let Value::Object(id) = &_args[1] {
+            m.pool.get(*id)
+        } else {
+            panic!("Exptected object")
+        };
+
+        let fname: &str = &val.to_string(m);
+
+        match fname {
+            "disassemble" => {
+                let code = if let Function::Virtual(vf) = self {
+                    vf.code.toString()
+                } else {
+                    "<native function>".to_string()
+                };
+                let obj = m.pool.allocate(Box::new(code));
+                let code = vec![
+                    Instruction::LoadObject(1,obj),
+                    Instruction::Ret(1),
+                ];
+                let func = Function::from(code);
+                let obj = m.pool.allocate(Box::new(func));
+                m.set(dest,Value::Object(obj));
+            }
+            f => panic!("Unknown field `{}`",f),
+        }
+    }
+
     /// Call object
     fn call(&self, m: &mut Machine, args: Vec<Value>, c_index: u8) -> Value
     {

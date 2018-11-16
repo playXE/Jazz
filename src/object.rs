@@ -36,12 +36,12 @@ pub trait Object: Send + ObjectAddon
 
 
 pub trait ObjectAddon {
-    fn to_string(&self) -> String {String::new()}
+    fn to_string(&self,_: &mut Machine) -> String {String::new()}
 
-    fn to_int(&self) -> i32 {0}
+    fn to_int(&self,_: &mut Machine) -> i32 {0}
 
-    fn to_long(&self) -> i64 {0}
+    fn to_long(&self,_: &mut Machine) -> i64 {0}
 
-    fn to_float(&self) -> f32 {0.0}
-    fn to_double(&self) -> f64 {0.0}
+    fn to_float(&self,_: &mut Machine) -> f32 {0.0}
+    fn to_double(&self,_: &mut Machine) -> f64 {0.0}
 }
