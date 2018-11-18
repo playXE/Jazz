@@ -1,4 +1,4 @@
-# Jazz Virtual Machine
+# Jazz
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/playXE/Jazz/blob/master/LICENSE)
 
 
