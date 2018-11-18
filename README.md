@@ -2,7 +2,7 @@
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/playXE/Jazz/blob/master/LICENSE)
 
 
-Jazz is a register-based virtual machine and lighweight programming language
+Jazz is a register-based virtual machine and lightweight programming language
 
 Jazz is heavily inspired by [Gravity](https://marcobambini.github.io/gravity/#/) language
 
