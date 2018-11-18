@@ -1,9 +1,0 @@
-[package]
-name = "jazzc"
-version = "0.1.0"
-authors = ["Adel Prokurov <adel.prokurov@protonmail.com>"]
-edition = "2018"
-
-[dependencies]
-jazz = "0.2.2"
-bytes = "0.4"

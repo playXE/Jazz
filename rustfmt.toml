@@ -1,4 +1,0 @@
-merge_imports = true
-
-imports_layout = "Horizontal"
-brace_style = "AlwaysNextLine"
