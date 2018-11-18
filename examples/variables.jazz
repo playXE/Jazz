@@ -1,0 +1,13 @@
+func add2(n) {
+    return n + 2;
+}
+
+
+func main() {
+    var function = add2;
+
+    print(function(4));
+    return 0;
+}
+
+
