@@ -78,7 +78,6 @@ impl Object for Function
             let ret = match self {
                 Function::Virtual(ref vf) => {
                     let func = vf.clone();
-
                     for i in 0..args.len() {
                         m.last_frame_mut().stack[i] = args[i];
                     }

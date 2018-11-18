@@ -23,18 +23,19 @@ pub fn print(m: &mut Machine,args: Vec<Value>) -> Value {
     
     for i in 1..args.len() {
         match args[i] {
-            Value::Int(i) => println!("{}",i),
-            Value::Long(l) => println!("{}",l),
-            Value::Float(f) => println!("{}",f),
-            Value::Double(d) => println!("{}",d),
-            Value::Bool(b) => println!("{}",b),
-            Value::Null => println!("null"),
+            Value::Int(i) => print!("{}",i),
+            Value::Long(l) => print!("{}",l),
+            Value::Float(f) => print!("{}",f),
+            Value::Double(d) => print!("{}",d),
+            Value::Bool(b) => print!("{}",b),
+            Value::Null => print!("null"),
             Value::Object(id) => {
                 let stri = m.pool.get(id).to_string(m);
                 println!("{}",stri);
             }
         }
     }
+    println!("");
     Value::Null
 }
 
@@ -155,7 +156,7 @@ impl<'a> Compiler<'a> {
             self.builder = builder;
             for param in &fun.params {
                 let reg = self.builder.register_first_temp_available();
-
+                
                 self.builder.new_local(param.to_string(), reg);
             }
             self.translate_stmt(*fun.clone().body);
@@ -196,7 +197,8 @@ impl<'a> Compiler<'a> {
             }
 
             Expr::FnCall(ref fname, ref args) => {
-                
+                let args = args.clone();
+            
                 for arg in args.iter() {
                     self.translate_expr(arg.clone());
                     let r = self.builder.register_pop();

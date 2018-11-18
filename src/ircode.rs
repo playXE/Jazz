@@ -21,9 +21,9 @@ impl FunctionBuilder {
     pub fn new(nlocals: usize) -> FunctionBuilder {
         let mut state = [false; MAX_REGISTERS];
         state[0] = true;
-        for i in 0..nlocals {
+        /*for i in 0..nlocals {
             state[i] = true;
-        }
+        }*/
 
         FunctionBuilder {
             label_counter: 0,

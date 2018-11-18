@@ -2,3 +2,5 @@
 **/*.rs.bk
 /.idea
 ./simple_jazz/target
+/vm/target
+./vm/target
