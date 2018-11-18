@@ -18,10 +18,10 @@ func factorial(num) {
     }
 }
 
-func main():
+func main() {
     print(factorial(5));
     return 0;
-end
+}
 
 
 ```
