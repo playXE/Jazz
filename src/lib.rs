@@ -18,6 +18,7 @@ use jazz_vm::machine::Machine;
 use jazz_vm::opcodes::DebugCode;
 use jazz_vm::opcodes::Instruction;
 use jazz_vm::value::Value;
+use jazz_vm::object::ObjectAddon;
 
 pub struct Compiler<'a> {
     pub machine: &'a mut Machine,
@@ -52,6 +53,11 @@ impl<'a> Compiler<'a> {
         self.gp += 1;
         let id = self.machine.pool.allocate(Box::new(Function::from_native(Box::new(readln))));
         self.globals.insert("readln".to_string(),self.gp);
+        self.machine.globals.insert(self.gp,Value::Object(id));
+
+        self.gp += 1;
+        let id = self.machine.pool.allocate(Box::new(Function::from_native(Box::new(new_array))));
+        self.globals.insert("__new_array__".to_string(),self.gp);
         self.machine.globals.insert(self.gp,Value::Object(id));
 
     }
@@ -89,7 +95,7 @@ impl<'a> Compiler<'a> {
             Stmt::For(value,condition,expr,block) => {
                 let check_label = self.builder.new_label();
                 let end_label = self.builder.new_label();
-                
+
                 self.translate_stmt(*value);
 
                 self.builder.label_here(check_label);
@@ -149,53 +155,21 @@ impl<'a> Compiler<'a> {
     }
 
     pub fn compile(&mut self, globals: Vec<Global>) -> Value {
-        for val in globals.iter() {
+        for global in globals.iter() {
             self.gp += 1;
-            if let Global::FnDefenition(ref fun) = &val {
+
+            if let Global::FnDefenition(ref fun) = &global {
                 let name = if let Expr::Identifier(ref n) = &*fun.name {
                     n.to_string()
                 } else {
                     "<unknown>".to_string()
                 };
-                self.machine.globals.insert(self.gp, Value::Null);
+                self.machine.globals.insert(self.gp, Value::Int(0));
 
                 self.globals.insert(name.clone(), self.gp);
             }
-            if let Global::Variable(ref var_stmt) = &val {
-                if let Stmt::Var(ref var_name,ref value) = var_stmt {
-                    if value.is_none() {
-                        panic!("Global value must be initialized!");
-                    }
-                    let value = match *value.clone().unwrap() {
-                        Expr::IntConst(integer) => {
-                            Value::Int(integer as i32)
-                        }
-                        Expr::FloatConst(float) => {
-                            Value::Float(float as f32)
-                        }
-                        Expr::True => {
-                            Value::Bool(true)
-                        }
-                        Expr::False => {
-                            Value::Bool(false)
-                        }
-                        Expr::StringConst(ref strd) => {
-                            let id = self.machine.pool.allocate(Box::new(strd.clone()));
-                            Value::Object(id)
-                        }
-                        v => panic!("Cannot create global from `{:?}`",v),
-                    };
 
-                    self.globals.insert(var_name.to_string(), self.gp);
-                    self.machine.globals.insert(self.gp,value);
 
-                }
-            }
-            
-
-        }
-
-        for global in globals.iter() {
             if let Global::FnDefenition(ref fun) = global {
                 let name = if let Expr::Identifier(ref n) = &*fun.name.clone() {
                     n.to_string()
@@ -220,6 +194,8 @@ impl<'a> Compiler<'a> {
                     println!("{}", code.toString());
                 }
 
+
+
                 let function = Function::from_instructions(code, fun.params.len());
                 let func = self.machine.pool.allocate(Box::new(function));
                 self.machine.globals.insert(self.gp, Value::Object(func));
@@ -233,8 +209,8 @@ impl<'a> Compiler<'a> {
         let ret = self.machine.invoke(*main, vec![]);
         let end = Instant::now();
         println!(
-            "RESULT: {:?} (in {})",
-            ret,
+            "RESULT: {} (in {})",
+            ret.to_String(self.machine),
             end.float_duration_since(start).unwrap()
         );
         ret
@@ -258,9 +234,7 @@ impl<'a> Compiler<'a> {
                     self.builder.push_op(Instruction::PushArg(r));
                 }
 
-                self.builder.int_const(0); // emit this value for function
-                let r = self.builder.register_pop();
-                self.builder.push_op(Instruction::PushArg(r));
+
                 let dest = self.builder.register_push_temp();
                 let fptr = if !self.globals.contains_key(fname) {
                     let r = self.builder.get_local(fname);
@@ -268,13 +242,33 @@ impl<'a> Compiler<'a> {
                 } else {
                     let idx = self.globals.get(fname).expect(&format!("Function not found `{}`",fname));
                     let register = self.builder.register_first_temp_available();
-                    self.builder
-                        .push_op(Instruction::LoadObject(register, *idx));
+                    self.builder.push_op(Instruction::LoadGlobal(*idx,register));
                     register
                 };
+                self.builder.push_op(Instruction::PushArg(fptr));
                 self.builder
                     .push_op(Instruction::Call(dest, fptr, args.len()));
             }
+
+            Expr::Array(arr_expr) => {
+                for expr in arr_expr.iter() {
+                    self.translate_expr(expr.clone());
+                    let r = self.builder.register_pop();
+                    self.builder.push_op(Instruction::PushArg(r));
+                }
+
+
+
+                let id = self.globals.get("__new_array__").unwrap();
+                let reg = self.builder.register_push_temp();
+                self.builder.push_op(Instruction::LoadGlobal(*id,reg));
+                self.builder.push_op(Instruction::PushArg(reg));
+                let dest = self.builder.register_push_temp();
+                self.builder.push_op(Instruction::Call(dest,reg,arr_expr.len()));
+
+
+            }
+
 
             Expr::Op(op, e1, e2) => {
                 let e1 = *e1;
@@ -307,7 +301,7 @@ impl<'a> Compiler<'a> {
             }
 
             Expr::StringConst(ref s) => {
-               
+
                 let r = self.builder.register_push_temp();
                 self.builder.push_op(Instruction::LoadString(r,s.to_string()));
             }

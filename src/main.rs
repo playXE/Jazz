@@ -12,6 +12,7 @@ use std::io::prelude::*;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
+
 #[derive(StructOpt, Debug)]
 pub struct Options {
     #[structopt(name = "FILE", parse(from_os_str))]

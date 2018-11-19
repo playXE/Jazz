@@ -40,5 +40,5 @@ fn load_at()
         panic!("");
     };
 
-    println!("{}", obj.to_string(&mut machine));
+    println!("{}", obj.to_String(&mut machine));
 }

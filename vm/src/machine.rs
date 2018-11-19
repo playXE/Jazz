@@ -71,8 +71,8 @@ impl Machine
     {
         let id = match callable {
             Value::Object(id) => id,
-            _ => {
-                panic!("Not callable");
+            v => {
+                panic!("Not callable {:?}",v);
             }
         };
 
@@ -286,7 +286,7 @@ impl Machine
                 }
 
                 Instruction::LoadObject(reg, idx) => {
-                    self.set(*reg, Value::Object(*idx));
+                    self.set(*reg,Value::Object(*idx));
                 }
 
                 Instruction::Gt(dest, r1, r2) => {

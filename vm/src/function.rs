@@ -23,6 +23,10 @@ impl crate::object::ObjectAddon for Function {
     fn as_function(&self) -> &Function {
         self
     }
+
+    fn to_String(&self,m: &mut Machine) -> String {
+        String::from("function")
+    }
 }
 
 impl Object for Function
