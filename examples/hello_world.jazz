@@ -1,11 +1,7 @@
 
 
-func test() {
-    print("Hello");
-    return 0;
-}
+
 
 func main() {
-    test();
-    return 0;
+    print("Hello world!");
 }
