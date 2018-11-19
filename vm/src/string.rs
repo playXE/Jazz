@@ -2,7 +2,7 @@ use crate::{machine::Machine, object::*, object_pool::ObjectPool};
 
 impl ObjectAddon for String
 {
-    fn to_string(&self, _: &mut Machine) -> String
+    fn to_String(&self, _: &mut Machine) -> String
     {
         self.clone()
     }
@@ -34,6 +34,10 @@ use std::any::Any;
 
 impl Object for String
 {
+    fn typename(&self) -> String {
+        String::from("String")
+    }
+
     fn initialize(&mut self, _: &mut ObjectPool)
     {
     }

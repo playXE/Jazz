@@ -47,7 +47,7 @@ impl FunctionBuilder {
 
     pub fn get_local(&mut self, n: &str) -> usize {
         if self.locals.contains_key(n) {
-            let r = self.locals.get(n).unwrap().clone();
+            let r = self.locals.get(n).expect("Unknown local").clone();
             r
         } else {
             panic!("Local `{}` doesn't exists", n);

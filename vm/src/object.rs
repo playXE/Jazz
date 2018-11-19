@@ -12,7 +12,7 @@ pub trait Object: Send + ObjectAddon
     {
     }
 
-    fn call(&self, _m: &mut Machine, _args: Vec<Value>, _c_index: u8) -> Value
+    fn call(&self, _m: &mut Machine, _args: Vec<Value>) -> Value
     {
         Value::Null
     }
@@ -36,9 +36,13 @@ pub trait Object: Send + ObjectAddon
 
 pub trait ObjectAddon
 {
-    fn to_string(&self, _: &mut Machine) -> String
+    fn to_String(&self, _: &mut Machine) -> String
     {
         String::new()
+    }
+
+    fn as_bytes(&self,_: &mut Machine) -> Vec<u8> {
+        Vec::new()
     }
 
     fn to_int(&self, _: &mut Machine) -> i32

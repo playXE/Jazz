@@ -52,7 +52,7 @@ impl Object for Function
             panic!("Exptected object")
         };
 
-        let fname: &str = &val.to_string(m);
+        let fname: &str = &val.to_String(m);
 
         match fname {
             "disassemble" => {
@@ -72,9 +72,9 @@ impl Object for Function
     }
 
     /// Call object
-    fn call(&self, m: &mut Machine, args: Vec<Value>, c_index: u8) -> Value
+    fn call(&self, m: &mut Machine, args: Vec<Value>) -> Value
     {
-        if c_index == 0 {
+        
             let ret = match self {
                 Function::Virtual(ref vf) => {
                     let func = vf.clone();
@@ -85,12 +85,10 @@ impl Object for Function
                     m.run_code(code.clone())
                 }
 
-                Function::Native(nv) => nv.invoke(m, args),
+                Function::Native(nv) => nv.0(m,args),
             };
             return ret;
-        } else {
-            panic!("Function expect CALL idnex,found `{}`", c_index);
-        }
+        
     }
 }
 
@@ -128,7 +126,7 @@ impl From<Vec<Instruction>> for Function
     }
 }
 
-pub struct NativeFunction(Box<dyn Fn(&mut Machine, Vec<Value>) -> Value + Send>);
+pub struct NativeFunction(pub Box<dyn Fn(&mut Machine, Vec<Value>) -> Value + Send>);
 
 impl NativeFunction
 {

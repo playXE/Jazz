@@ -80,7 +80,7 @@ impl Machine
         self.stack.push(CallFrame::new());
         let ret = {
             self.last_frame_mut().init_with_args(&args.as_slice());
-            obj.call(self, args, super::index::CALL)
+            obj.call(self, args)
         };
 
         ret
@@ -115,13 +115,14 @@ impl Machine
         let mut returns = false;
         let mut ret = Value::Null;
         let start = super::time::PreciseTime::now();
+        
         while self.last_frame().ip < self.last_frame().code.len() {
             if returns {
                 break;
             }
 
             let opcode = self.last_frame().code[self.last_frame().ip].clone();
-
+            
             match &opcode {
                 Instruction::Label(label_id) => {
                     self.labels.insert(*label_id, self.last_frame().ip);
@@ -138,6 +139,12 @@ impl Machine
 
                 Instruction::LoadInt(dest, int) => {
                     self.set(*dest, Value::Int(*int));
+                }
+
+                Instruction::LoadString(reg,ref string) => {
+                    let string = string.to_string();
+                    let object_id = self.pool.allocate(Box::new(string));
+                    self.set(*reg,Value::Object(object_id));
                 }
 
                 Instruction::LoadDouble(dest, double) => {
@@ -203,6 +210,7 @@ impl Machine
                     let value = self.get(*r2);
                     let v = self.invoke(value, args);
                     self.stack.pop();
+                    
                     self.set(*dest, v);
                 }
                 Instruction::Sub(dest, r1, r2) => {

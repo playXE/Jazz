@@ -1,19 +1,19 @@
-extern crate jazz_vm;
 extern crate jazz;
+extern crate jazz_vm;
 extern crate structopt;
-use jazz_vm::machine::Machine;
 use jazz::{
     parser::{lex, parse},
     Compiler,
 };
+use jazz_vm::machine::Machine;
 
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-#[derive(StructOpt,Debug)]
-pub struct Options {    
+#[derive(StructOpt, Debug)]
+pub struct Options {
     #[structopt(name = "FILE", parse(from_os_str))]
     file: Option<PathBuf>,
     #[structopt(short = "d", long = "debug")]
@@ -30,9 +30,6 @@ fn main() {
     } else {
         panic!("You should enter file path");
     }
-
-
-    
 
     let lex = lex(&src);
     let parsed = parse(&mut lex.peekable()).unwrap();

@@ -26,7 +26,7 @@ impl Error for LexError {
 }
 
 impl fmt::Display for LexError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.description())
     }
 }
@@ -37,7 +37,9 @@ pub enum ParseError {
     InputPastEndOfFile,
     UnknownOperator,
     MissingRParen,
+    MissingLParen,
     MissingLCurly,
+    MissingSemicolon,
     MissingRCurly,
     MissingRSquare,
     MalformedCallExpr,
@@ -55,6 +57,8 @@ impl Error for ParseError {
             ParseError::InputPastEndOfFile => "Input past end of file",
             ParseError::UnknownOperator => "Unknown operator",
             ParseError::MissingRParen => "Expected ')'",
+            ParseError::MissingSemicolon => "Expected ';'",
+            ParseError::MissingLParen => "Expected  '('",
             ParseError::MissingLCurly => "Expected '{'",
             ParseError::MissingRCurly => "Expected '}'",
             ParseError::MissingRSquare => "Expected ']'",
@@ -67,13 +71,13 @@ impl Error for ParseError {
         }
     }
 
-    fn cause(&self) -> Option<&Error> {
+    fn cause(&self) -> Option<&dyn Error> {
         None
     }
 }
 
 impl fmt::Display for ParseError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.description())
     }
 }
@@ -85,11 +89,18 @@ pub struct FnDef {
     pub body: Box<Stmt>,
 }
 
+#[derive(Clone,Debug)]
+pub enum Global {
+    FnDefenition(FnDef),
+    Variable(Stmt),
+}
+
 #[derive(Debug, Clone)]
 pub enum Stmt {
     If(Box<Expr>, Box<Stmt>),
     IfElse(Box<Expr>, Box<Stmt>, Box<Stmt>),
     While(Box<Expr>, Box<Stmt>),
+    For(Box<Stmt>,Box<Expr>,Box<Expr>,Box<Stmt>),
     Loop(Box<Stmt>),
     Var(String, Option<Box<Expr>>),
     Block(Vec<Stmt>),
@@ -129,6 +140,7 @@ pub enum Token {
     StringConst(String),
     GlobalIdent(String),
     Label,
+    For,
     NewLine,
     End,
     Enum,
@@ -424,14 +436,14 @@ impl<'a> TokenIterator<'a> {
     fn inner_next(&mut self) -> Option<Token> {
         while let Some(c) = self.char_stream.next() {
             match c {
-                '0'...'9' => {
+                '0'..='9' => {
                     let mut result = Vec::new();
                     let mut radix_base: Option<u32> = None;
                     result.push(c);
 
                     while let Some(&nxt) = self.char_stream.peek() {
                         match nxt {
-                            '0'...'9' => {
+                            '0'..='9' => {
                                 result.push(nxt);
                                 self.char_stream.next();
                             }
@@ -440,7 +452,7 @@ impl<'a> TokenIterator<'a> {
                                 self.char_stream.next();
                                 while let Some(&nxt_float) = self.char_stream.peek() {
                                     match nxt_float {
-                                        '0'...'9' => {
+                                        '0'..='9' => {
                                             result.push(nxt_float);
                                             self.char_stream.next();
                                         }
@@ -453,7 +465,7 @@ impl<'a> TokenIterator<'a> {
                                 self.char_stream.next();
                                 while let Some(&nxt_hex) = self.char_stream.peek() {
                                     match nxt_hex {
-                                        '0'...'9' | 'a'...'f' | 'A'...'F' => {
+                                        '0'..='9' | 'a'..='f' | 'A'..='F' => {
                                             result.push(nxt_hex);
                                             self.char_stream.next();
                                         }
@@ -467,7 +479,7 @@ impl<'a> TokenIterator<'a> {
                                 self.char_stream.next();
                                 while let Some(&nxt_oct) = self.char_stream.peek() {
                                     match nxt_oct {
-                                        '0'...'8' => {
+                                        '0'..='8' => {
                                             result.push(nxt_oct);
                                             self.char_stream.next();
                                         }
@@ -516,7 +528,7 @@ impl<'a> TokenIterator<'a> {
                     return Some(Token::LexErr(LexError::MalformedNumber));
                 }
 
-                '$' | 'A'...'Z' | 'a'...'z' | '_' => {
+                '$' | 'A'..='Z' | 'a'..='z' | '_' => {
                     let mut result = Vec::new();
                     result.push(c);
 
@@ -535,10 +547,11 @@ impl<'a> TokenIterator<'a> {
                         "true" => return Some(Token::True),
                         "false" => return Some(Token::False),
                         "var" => return Some(Token::Var),
-                        
+
                         "if" => return Some(Token::If),
                         "end" => return Some(Token::End),
                         "else" => return Some(Token::Else),
+                        "for" => return Some(Token::For),
                         "while" => return Some(Token::While),
                         "loop" => return Some(Token::Loop),
                         "break" => return Some(Token::Break),
@@ -771,7 +784,7 @@ impl<'a> Iterator for TokenIterator<'a> {
     }
 }
 
-pub fn lex(input: &str) -> TokenIterator {
+pub fn lex(input: &str) -> TokenIterator<'_> {
     TokenIterator {
         last: Token::LexErr(LexError::Nothing),
         char_stream: input.chars().peekable(),
@@ -1006,14 +1019,14 @@ fn parse_binop<'a>(
                 Token::GreaterThan => Expr::Op(Op::Gt, Box::new(lhs_curr), Box::new(rhs)),
                 Token::LessThan => Expr::Op(Op::Lt, Box::new(lhs_curr), Box::new(rhs)),
                 Token::Equals => Expr::Assignment(Box::new(lhs_curr), Box::new(rhs)),
-                Token::And => Expr::Op(Op::And,Box::new(lhs_curr),Box::new(rhs)),
-                Token::Or => Expr::Op(Op::Or,Box::new(lhs_curr),Box::new(rhs)),
-                Token::Ampersand => Expr::Op(Op::BitAnd,Box::new(lhs_curr),Box::new(rhs)),
-                Token::Pipe => Expr::Op(Op::BitOr,Box::new(lhs_curr),Box::new(rhs)),
-                Token::XOr => Expr::Op(Op::BitXor,Box::new(lhs_curr),Box::new(rhs)),
-                Token::LeftShift => Expr::Op(Op::Shl,Box::new(lhs_curr),Box::new(rhs)),
-                Token::RightShift => Expr::Op(Op::Shr,Box::new(lhs_curr),Box::new(rhs)),
-                                /* Token::PlusAssign => {
+                Token::And => Expr::Op(Op::And, Box::new(lhs_curr), Box::new(rhs)),
+                Token::Or => Expr::Op(Op::Or, Box::new(lhs_curr), Box::new(rhs)),
+                Token::Ampersand => Expr::Op(Op::BitAnd, Box::new(lhs_curr), Box::new(rhs)),
+                Token::Pipe => Expr::Op(Op::BitOr, Box::new(lhs_curr), Box::new(rhs)),
+                Token::XOr => Expr::Op(Op::BitXor, Box::new(lhs_curr), Box::new(rhs)),
+                Token::LeftShift => Expr::Op(Op::Shl, Box::new(lhs_curr), Box::new(rhs)),
+                Token::RightShift => Expr::Op(Op::Shr, Box::new(lhs_curr), Box::new(rhs)),
+                /* Token::PlusAssign => {
                     let lhs_copy = lhs_curr.clone();
                     Expr::Assignment(
                         Box::new(lhs_curr),
@@ -1143,6 +1156,33 @@ fn parse_if<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseEr
     }
 }
 
+fn parse_for<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt,ParseError> {
+    input.next();
+    match input.next() {
+        Some(Token::LParen) => {},
+        _ => return Err(ParseError::MissingLParen),
+    }
+    let value = parse_var(input)?;
+    match input.next() {
+        Some(Token::Semicolon) => {},
+        _ => return Err(ParseError::MissingSemicolon),
+    }
+    let condition = parse_expr(input)?;
+    match input.next() {
+        Some(Token::Semicolon) => {},
+        _ => return Err(ParseError::MissingSemicolon),
+    }
+    let expr = parse_expr(input)?;
+    match input.next() {
+        Some(Token::RParen) => {},
+        _ => return Err(ParseError::MissingRParen),
+    }
+    let block = parse_block(input)?;
+
+    Ok(Stmt::For(Box::new(value),Box::new(condition),Box::new(expr),Box::new(block)))
+
+}
+
 fn parse_while<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseError> {
     input.next();
 
@@ -1244,6 +1284,7 @@ fn parse_stmt<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, Parse
     match input.peek() {
         Some(&Token::If) => parse_if(input),
         Some(&Token::While) => parse_while(input),
+        Some(&Token::For) => parse_for(input),
         Some(&Token::Loop) => parse_loop(input),
         Some(&Token::Break) => {
             input.next();
@@ -1320,12 +1361,13 @@ fn parse_fn<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<FnDef, ParseE
     })
 }
 
-fn parse_top_level<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Vec<FnDef>, ParseError> {
-    let mut fndefs = Vec::new();
+fn parse_top_level<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Vec<Global>, ParseError> {
+    let mut globals = Vec::new();
     while let Some(_) = input.peek() {
         match input.peek() {
-            Some(&Token::Fn) => fndefs.push(parse_fn(input)?),
-            Some(&Token::NewLine) => {},
+            Some(&Token::Fn) => globals.push(Global::FnDefenition(parse_fn(input)?)),
+            Some(&Token::NewLine) => {}
+            Some(&Token::Var) => globals.push(Global::Variable(parse_var(input)?)),
             _ => panic!("Expected top level element"),
         }
 
@@ -1334,9 +1376,9 @@ fn parse_top_level<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Vec<Fn
         }
     }
 
-    Ok(fndefs)
+    Ok(globals)
 }
 
-pub fn parse<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<(Vec<FnDef>), ParseError> {
+pub fn parse<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Vec<Global>, ParseError> {
     parse_top_level(input)
 }

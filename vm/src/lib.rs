@@ -18,6 +18,7 @@
 
 #![warn(rust_2018_idioms)]
 #![feature(test)]
+#![allow(non_snake_case)]
 
 pub mod frame;
 pub mod function;

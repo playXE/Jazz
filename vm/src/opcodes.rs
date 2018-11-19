@@ -1,6 +1,8 @@
-#[derive(Clone,Debug,Copy)]
+#[derive(Clone,Debug)]
 pub enum Instruction
 {
+    LoadString(usize,String),
+
     /// LoadBool R(A) = B
     ///
     /// Loading bool value B to register A

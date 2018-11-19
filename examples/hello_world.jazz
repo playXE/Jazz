@@ -1,4 +1,11 @@
+
+
+func test() {
+    print("Hello");
+    return 0;
+}
+
 func main() {
-    print("Hello world!");
+    test();
     return 0;
 }

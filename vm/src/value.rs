@@ -108,7 +108,29 @@ impl ObjectAddon for Value
         }
     }
 
-    fn to_string(&self,m: &mut Machine) -> String {
+    fn as_bytes(&self,m: &mut Machine) -> Vec<u8> {
+        let string: String = match self {
+            Value::Double(d) => d.to_string(),
+            Value::Float(f) => f.to_string(),
+            Value::Bool(b) => {
+                if *b {
+                    "true".to_string()
+                } else {
+                    "false".to_string()
+                }
+            }
+            Value::Int(i) => i.to_string(),
+            Value::Long(i) => i.to_string(),
+            Value::Null => "null".to_string(),
+            Value::Object(id) => {
+                let obj = m.pool.get(*id);
+                obj.to_String(m)
+            }            
+        };
+        string.into_bytes()
+    }
+
+    fn to_String(&self,m: &mut Machine) -> String {
         match self {
             Value::Double(d) => d.to_string(),
             Value::Float(f) => f.to_string(),
@@ -124,7 +146,7 @@ impl ObjectAddon for Value
             Value::Null => "null".to_string(),
             Value::Object(id) => {
                 let obj = m.pool.get(*id);
-                obj.to_string(m)
+                obj.to_String(m)
             }            
         }
     }

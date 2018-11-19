@@ -1,0 +1,7 @@
+func main() {
+    var i = 1000;
+    while i > 0 {
+        i = i - 1;
+    }
+    print(i);
+}

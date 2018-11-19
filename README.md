@@ -6,6 +6,17 @@ Jazz is a register-based virtual machine and lightweight programming language
 
 Jazz is heavily inspired by [Gravity](https://marcobambini.github.io/gravity/#/) language
 
+## Goals
+* **Clear and simple syntax**
+* **Integration with Rust**
+* **Interfacing with other languages than Rust**
+* **Make VM suitable for object oriented programming**
+
+## Non-goals
+* Write simple book for learning Jazz programming language
+* JIT compilation
+* Generating bytecode files
+
 
 # Example code
 
@@ -22,6 +33,4 @@ func main() {
     print(factorial(5));
     return 0;
 }
-
-
 ```
