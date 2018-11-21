@@ -53,13 +53,10 @@ impl Machine
         self.last_frame_mut().stack[0] = v;
     }
 
-    pub fn set(&mut self, reg: usize, v: Value)
+    pub fn set(&mut self, r: usize, v: Value)
     {
-        if reg == 0 {
-            panic!("R(0) is a this value, cannot set!");
-        }
 
-        self.last_frame_mut().set(reg, v);
+        self.last_frame_mut().set(r, v);
     }
 
     pub fn dispatch(&mut self)
@@ -120,16 +117,14 @@ impl Machine
             if returns {
                 break;
             }
-
+            
             let opcode = self.last_frame().code[self.last_frame().ip].clone();
             
             match &opcode {
-                Instruction::Label(label_id) => {
-                    self.labels.insert(*label_id, self.last_frame().ip);
-                }
+                Instruction::Label(_label_id) => {}
 
-                Instruction::PushArg(reg) => {
-                    let value = self.get(*reg);
+                Instruction::LoadArg(r1) => {
+                    let value = self.get(*r1);
                     self.last_frame_mut().arg_stack.push(value);
                 }
 
@@ -141,10 +136,10 @@ impl Machine
                     self.set(*dest, Value::Int(*int));
                 }
 
-                Instruction::LoadString(reg,ref string) => {
+                Instruction::LoadString(r1,ref string) => {
                     let string = string.to_string();
                     let object_id = self.pool.allocate(Box::new(string));
-                    self.set(*reg,Value::Object(object_id));
+                    self.set(*r1,Value::Object(object_id));
                 }
 
                 Instruction::LoadDouble(dest, double) => {
@@ -285,8 +280,8 @@ impl Machine
                     self.set(*dest, result);
                 }
 
-                Instruction::LoadObject(reg, idx) => {
-                    self.set(*reg,Value::Object(*idx));
+                Instruction::LoadConst(r1, idx) => {
+                    self.set(*r1,Value::Object(*idx));
                 }
 
                 Instruction::Gt(dest, r1, r2) => {
@@ -304,6 +299,51 @@ impl Machine
                         (Value::Int(i),v) => Value::Bool(i > v.to_int(self)),
                         (Value::Double(d), v) => Value::Bool(d > v.to_double(self)),
                         (Value::Float(f),v) => Value::Bool(f > v.to_float(self)),
+                        (v, Value::Null) => v,
+                        (Value::Null, v) => v,
+                        v => panic!("{:?}",v),
+                    };
+
+                    self.set(*dest, result);
+                }
+                Instruction::Ge(dest, r1, r2) => {
+                    let (v1, v2) = (self.get(*r1), self.get(*r2));
+                    let result = match (v1, v2) {
+                        (Value::Int(i), Value::Int(i2)) => Value::Bool(i >= i2),
+                        (Value::Long(i), Value::Long(i2)) => Value::Bool(i >= i2),
+                        (Value::Float(f), Value::Float(f2)) => Value::Bool(f >= f2),
+                        (Value::Double(f), Value::Double(f2)) => Value::Bool(f >= f2),
+                        (Value::Int(i), Value::Long(i2)) => Value::Bool((i as i64) >= i2),
+                        (Value::Long(i), Value::Int(i2)) => Value::Bool(i >= (i2 as i64)),
+                        (Value::Float(f), Value::Double(f2)) => Value::Bool((f as f64) >= f2),
+                        (Value::Double(f), Value::Float(f2)) => Value::Bool(f >= (f2 as f64)),
+                        (Value::Long(l),v) => Value::Bool(l >= v.to_long(self)),
+                        (Value::Int(i),v) => Value::Bool(i >= v.to_int(self)),
+                        (Value::Double(d), v) => Value::Bool(d >= v.to_double(self)),
+                        (Value::Float(f),v) => Value::Bool(f >= v.to_float(self)),
+                        (v, Value::Null) => v,
+                        (Value::Null, v) => v,
+                        _ => unimplemented!(),
+                    };
+
+                    self.set(*dest, result);
+                }
+
+                Instruction::Le(dest, r1, r2) => {
+                    let (v1, v2) = (self.get(*r1), self.get(*r2));
+                    let result = match (v1, v2) {
+                        (Value::Int(i), Value::Int(i2)) => Value::Bool(i <= i2),
+                        (Value::Long(i), Value::Long(i2)) => Value::Bool(i <= i2),
+                        (Value::Float(f), Value::Float(f2)) => Value::Bool(f <= f2),
+                        (Value::Double(f), Value::Double(f2)) => Value::Bool(f <= f2),
+                        (Value::Int(i), Value::Long(i2)) => Value::Bool((i as i64) <= i2),
+                        (Value::Long(i), Value::Int(i2)) => Value::Bool(i <= (i2 as i64)),
+                        (Value::Float(f), Value::Double(f2)) => Value::Bool((f as f64) <= f2),
+                        (Value::Double(f), Value::Float(f2)) => Value::Bool(f <= (f2 as f64)),
+                        (Value::Long(l),v) => Value::Bool(l <= v.to_long(self)),
+                        (Value::Int(i),v) => Value::Bool(i <= v.to_int(self)),
+                        (Value::Double(d), v) => Value::Bool(d <= v.to_double(self)),
+                        (Value::Float(f),v) => Value::Bool(f <= v.to_float(self)),
                         (v, Value::Null) => v,
                         (Value::Null, v) => v,
                         _ => unimplemented!(),
@@ -329,7 +369,7 @@ impl Machine
                         (Value::Float(f),v) => Value::Bool(f < v.to_float(self)),
                         (v, Value::Null) => v,
                         (Value::Null, v) => v,
-                        _ => unimplemented!(),
+                        (v,v1) => panic!("{:?} < {:?}",v.to_String(self),v1.to_String(self)),
                     };
 
                     self.set(*dest, result);
@@ -419,8 +459,8 @@ impl Machine
                         (Value::Int(i),v) => Value::Bool(i == v.to_int(self)),
                         (Value::Double(d), v) => Value::Bool(d < v.to_double(self)),
                         (Value::Float(f),v) => Value::Bool(f == v.to_float(self)),
-                        (v, Value::Null) => v,
-                        (Value::Null, v) => v,
+                        (v, Value::Null) => Value::Bool(false),
+                        (Value::Null, v) => Value::Bool(false),
                         _ => unimplemented!(),
                     };
 
@@ -436,61 +476,8 @@ impl Machine
                     }
                 }
 
-                Instruction::GotoT(reg, lbl_id) => match self.get(*reg) {
-                    Value::Bool(b) => {
-                        if b {
-                            if self.labels.contains_key(lbl_id) {
-                                let idx = self.labels.get(lbl_id).unwrap();
-                                self.branch(*idx);
-                            } else {
-                                panic!("Label with id `{}`,doesn't exists", lbl_id)
-                            }
-                        }
-                    }
-                    Value::Int(i) => {
-                        if i > 0 {
-                            if self.labels.contains_key(lbl_id) {
-                                let idx = self.labels.get(lbl_id).unwrap();
-                                self.branch(*idx);
-                            } else {
-                                panic!("Label with id `{}`,doesn't exists", lbl_id)
-                            }
-                        }
-                    }
-
-                    Value::Long(i) => {
-                        if i > 0 {
-                            if self.labels.contains_key(lbl_id) {
-                                let idx = self.labels.get(lbl_id).unwrap();
-                                self.branch(*idx);
-                            } else {
-                                panic!("Label with id `{}`,doesn't exists", lbl_id)
-                            }
-                        }
-                    }
-                    Value::Float(f) => {
-                        if f > 0.0 {
-                            if self.labels.contains_key(lbl_id) {
-                                let idx = self.labels.get(lbl_id).unwrap();
-                                self.branch(*idx);
-                            } else {
-                                panic!("Label with id `{}`,doesn't exists", lbl_id)
-                            }
-                        }
-                    }
-                    Value::Double(f) => {
-                        if f > 0.0 {
-                            if self.labels.contains_key(lbl_id) {
-                                let idx = self.labels.get(lbl_id).unwrap();
-                                self.branch(*idx);
-                            } else {
-                                panic!("Label with id `{}`,doesn't exists", lbl_id)
-                            }
-                        }
-                    }
-                    _ => unimplemented!(),
-                },
-                Instruction::GotoF(reg, lbl_id) => match self.get(*reg) {
+                
+                Instruction::GotoF(r1, lbl_id) => match self.get(*r1) {
                     Value::Bool(b) => {
                         if !b {
                             if self.labels.contains_key(lbl_id) {
@@ -501,35 +488,25 @@ impl Machine
                             }
                         }
                     }
-                    _ => unimplemented!(),
+                    
+                    v => panic!("Failed GotoF {} {:?}\n prev opcode {:?}",r1,v,self.last_frame().code[self.last_frame().ip - 1]),
                 },
 
                 Instruction::Jump(idx) => {
-                    self.branch(*idx - 1);
-                }
-                Instruction::JumpT(r1, idx) => {
-                    let v = self.get(*r1);
-                    match v {
-                        Value::Bool(b) => {
-                            if b {
-                                self.branch(*idx - 1);
-                            }
-                        }
-                        _ => unimplemented!(),
-                    }
+                    self.branch(*idx);
                 }
 
-                Instruction::LoadGlobal(index, reg) => {
+                Instruction::LoadGlobal(r1, index) => {
                     if self.globals.contains_key(index) {
                         let value = self.globals.get(index).unwrap();
-                        self.set(*reg, *value);
+                        self.set(*r1, *value);
                     } else {
                         panic!("No value with index `{}` in globals", index);
                     }
                 }
 
-                Instruction::StoreGlobal(index, reg) => {
-                    let value = self.get(*reg);
+                Instruction::StoreGlobal(r1, index) => {
+                    let value = self.get(*r1);
                     self.globals.insert(*index, value);
                 }
 
@@ -540,7 +517,8 @@ impl Machine
                             self.branch(*idx);
                         }
                     } else {
-                        panic!("Expected bool");
+                        println!("{:?}",v);
+                        panic!("");
                     }
                 }
 
@@ -560,13 +538,10 @@ impl Machine
                 Instruction::LoadAt(r1, r2, r3) => {
                     let v2 = self.get(*r2);
                     let v3 = self.get(*r3);
-                    let this = self
-                        .last_frame_mut()
-                        .arg_stack
-                        .pop()
-                        .expect("No value to pop; LoadAt");
+                    
                     if let Value::Object(obj_id) = v2 {
                         let obj = self.pool.get(obj_id);
+                        let this = self.get(*r2);
                         obj.load_at(self, vec![this, v3], *r1);
                     } else {
                         panic!("Expected Object value");
@@ -587,9 +562,10 @@ impl Machine
 
                 
 
-                _ => unimplemented!(),
+                v => panic!("{:?}",v),
             }
-            self.dispatch();
+            self.last_frame_mut().ip += 1;
+            
         }
         let end = super::time::PreciseTime::now();
 

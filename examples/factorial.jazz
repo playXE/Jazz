@@ -1,4 +1,5 @@
-func factorial(n) {
+func factorial(n) 
+{
     if n == 0 {
         return 1;
     } else {
@@ -6,7 +7,8 @@ func factorial(n) {
     }
 }
 
-func main() {
+func main() 
+{
     var result = factorial(5);
 
     return result;

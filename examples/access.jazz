@@ -1,0 +1,8 @@
+func basic(a,b) {
+    return a + b;
+}
+
+
+func main() {
+    print(basic.disassemble());
+}

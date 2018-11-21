@@ -24,7 +24,7 @@ impl crate::object::ObjectAddon for Function {
         self
     }
 
-    fn to_String(&self,m: &mut Machine) -> String {
+    fn to_String(&self,_m: &mut Machine) -> String {
         String::from("function")
     }
 }
@@ -66,7 +66,7 @@ impl Object for Function
                     "<native function>".to_string()
                 };
                 let obj = m.pool.allocate(Box::new(code));
-                let code = vec![Instruction::LoadObject(1, obj), Instruction::Ret(1)];
+                let code = vec![Instruction::LoadConst(1, obj), Instruction::Ret(1)];
                 let func = Function::from(code);
                 let obj = m.pool.allocate(Box::new(func));
                 m.set(dest, Value::Object(obj));

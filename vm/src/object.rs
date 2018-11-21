@@ -1,7 +1,6 @@
 use crate::{machine::Machine, object_pool::ObjectPool, value::Value};
 use std::any::Any;
-
-pub trait Object: Send + ObjectAddon
+pub trait Object: Send + ObjectAddon 
 {
     fn typename(&self) -> String
     {
@@ -24,7 +23,7 @@ pub trait Object: Send + ObjectAddon
 
     fn load_at(&self, _m: &mut Machine, _args: Vec<Value>, _rindex: usize)
     {
-        panic!("Cannot load_at");
+        panic!("Cannot load_at. {:?}",self.to_String(_m));
     }
 
     fn as_any(&self) -> &dyn Any;

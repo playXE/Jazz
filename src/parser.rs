@@ -1,11 +1,8 @@
-use std::char;
-use std::error::Error;
-use std::fmt;
-use std::iter::Peekable;
-use std::str::Chars;
+use std::{char, error::Error, fmt, iter::Peekable, str::Chars};
 
 #[derive(Debug, Clone)]
-pub enum LexError {
+pub enum LexError
+{
     UnexpectedChar,
     MalformedEscapeSequence,
     MalformedNumber,
@@ -13,8 +10,10 @@ pub enum LexError {
     Nothing,
 }
 
-impl Error for LexError {
-    fn description(&self) -> &str {
+impl Error for LexError
+{
+    fn description(&self) -> &str
+    {
         match *self {
             LexError::UnexpectedChar => "Unexpected character in input",
             LexError::MalformedEscapeSequence => "Unexpected values in escape sequence",
@@ -25,14 +24,17 @@ impl Error for LexError {
     }
 }
 
-impl fmt::Display for LexError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl fmt::Display for LexError
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
+    {
         write!(f, "{}", self.description())
     }
 }
 
 #[derive(Debug)]
-pub enum ParseError {
+pub enum ParseError
+{
     BadInput,
     InputPastEndOfFile,
     UnknownOperator,
@@ -50,8 +52,10 @@ pub enum ParseError {
     FnMissingParams,
 }
 
-impl Error for ParseError {
-    fn description(&self) -> &str {
+impl Error for ParseError
+{
+    fn description(&self) -> &str
+    {
         match *self {
             ParseError::BadInput => "Unparseable characters in the input stream",
             ParseError::InputPastEndOfFile => "Input past end of file",
@@ -71,36 +75,42 @@ impl Error for ParseError {
         }
     }
 
-    fn cause(&self) -> Option<&dyn Error> {
+    fn cause(&self) -> Option<&dyn Error>
+    {
         None
     }
 }
 
-impl fmt::Display for ParseError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl fmt::Display for ParseError
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
+    {
         write!(f, "{}", self.description())
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct FnDef {
+pub struct FnDef
+{
     pub name: Box<Expr>,
     pub params: Vec<String>,
     pub body: Box<Stmt>,
 }
 
-#[derive(Clone,Debug)]
-pub enum Global {
+#[derive(Clone, Debug)]
+pub enum Global
+{
     FnDefenition(FnDef),
     Variable(Stmt),
 }
 
 #[derive(Debug, Clone)]
-pub enum Stmt {
+pub enum Stmt
+{
     If(Box<Expr>, Box<Stmt>),
     IfElse(Box<Expr>, Box<Stmt>, Box<Stmt>),
     While(Box<Expr>, Box<Stmt>),
-    For(Box<Stmt>,Box<Expr>,Box<Expr>,Box<Stmt>),
+    For(Box<Stmt>, Box<Expr>, Box<Expr>, Box<Stmt>),
     Loop(Box<Stmt>),
     Var(String, Option<Box<Expr>>),
     Block(Vec<Stmt>),
@@ -113,7 +123,8 @@ pub enum Stmt {
 }
 
 #[derive(Debug, Clone)]
-pub enum Expr {
+pub enum Expr
+{
     IntConst(i64),
     FloatConst(f64),
     Identifier(String),
@@ -131,8 +142,20 @@ pub enum Expr {
     Op(Op, Box<Expr>, Box<Expr>),
 }
 
+impl Expr
+{
+    pub fn is_call(&self) -> bool
+    {
+        match self {
+            Expr::FnCall(_, _) => true,
+            _ => false,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
-pub enum Token {
+pub enum Token
+{
     IntConst(i64),
     FloatConst(f64),
     Identifier(String),
@@ -205,8 +228,9 @@ pub enum Token {
     LexErr(LexError),
 }
 
-#[derive(Clone, Debug)]
-pub enum Op {
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Op
+{
     Add,
     Sub,
     Div,
@@ -224,12 +248,15 @@ pub enum Op {
     Or,
     Shl,
     Shr,
+    Access,
 }
 
-impl Token {
+impl Token
+{
     // if another operator is after these, it's probably an unary operator
     // not sure about fn's name
-    pub fn is_next_unary(&self) -> bool {
+    pub fn is_next_unary(&self) -> bool
+    {
         use self::Token::*;
 
         match *self {
@@ -284,7 +311,8 @@ impl Token {
     }
 
     #[allow(dead_code)]
-    pub fn is_bin_op(&self) -> bool {
+    pub fn is_bin_op(&self) -> bool
+    {
         use self::Token::*;
 
         match *self {
@@ -314,7 +342,8 @@ impl Token {
     }
 
     #[allow(dead_code)]
-    pub fn is_un_op(&self) -> bool {
+    pub fn is_un_op(&self) -> bool
+    {
         use self::Token::*;
 
         match *self {
@@ -324,13 +353,16 @@ impl Token {
     }
 }
 
-pub struct TokenIterator<'a> {
+pub struct TokenIterator<'a>
+{
     last: Token,
     char_stream: Peekable<Chars<'a>>,
 }
 
-impl<'a> TokenIterator<'a> {
-    pub fn parse_string_const(&mut self, enclosing_char: char) -> Result<String, LexError> {
+impl<'a> TokenIterator<'a>
+{
+    pub fn parse_string_const(&mut self, enclosing_char: char) -> Result<String, LexError>
+    {
         let mut result = Vec::new();
         let mut escape = false;
 
@@ -433,7 +465,8 @@ impl<'a> TokenIterator<'a> {
         Ok(out)
     }
 
-    fn inner_next(&mut self) -> Option<Token> {
+    fn inner_next(&mut self) -> Option<Token>
+    {
         while let Some(c) = self.char_stream.next() {
             match c {
                 '0'..='9' => {
@@ -771,11 +804,13 @@ impl<'a> TokenIterator<'a> {
     }
 }
 
-impl<'a> Iterator for TokenIterator<'a> {
+impl<'a> Iterator for TokenIterator<'a>
+{
     type Item = Token;
 
     // TODO - perhaps this could be optimized?
-    fn next(&mut self) -> Option<Self::Item> {
+    fn next(&mut self) -> Option<Self::Item>
+    {
         self.last = match self.inner_next() {
             Some(c) => c,
             None => return None,
@@ -784,14 +819,16 @@ impl<'a> Iterator for TokenIterator<'a> {
     }
 }
 
-pub fn lex(input: &str) -> TokenIterator<'_> {
+pub fn lex(input: &str) -> TokenIterator<'_>
+{
     TokenIterator {
         last: Token::LexErr(LexError::Nothing),
         char_stream: input.chars().peekable(),
     }
 }
 
-fn get_precedence(token: &Token) -> i32 {
+fn get_precedence(token: &Token) -> i32
+{
     match *token {
         Token::Equals
         | Token::PlusAssign
@@ -822,7 +859,8 @@ fn get_precedence(token: &Token) -> i32 {
     }
 }
 
-fn parse_paren_expr<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr, ParseError> {
+fn parse_paren_expr<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr, ParseError>
+{
     let expr = parse_expr(input).unwrap();
 
     match input.next() {
@@ -834,7 +872,8 @@ fn parse_paren_expr<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr,
 fn parse_call_expr<'a>(
     id: String,
     input: &mut Peekable<TokenIterator<'a>>,
-) -> Result<Expr, ParseError> {
+) -> Result<Expr, ParseError>
+{
     let mut args = Vec::new();
 
     if let Some(&Token::RParen) = input.peek() {
@@ -865,7 +904,8 @@ fn parse_call_expr<'a>(
 fn parse_index_expr<'a>(
     id: String,
     input: &mut Peekable<TokenIterator<'a>>,
-) -> Result<Expr, ParseError> {
+) -> Result<Expr, ParseError>
+{
     if let Ok(idx) = parse_expr(input) {
         match input.peek() {
             Some(&Token::RSquare) => {
@@ -882,7 +922,8 @@ fn parse_index_expr<'a>(
 fn parse_ident_expr<'a>(
     id: String,
     input: &mut Peekable<TokenIterator<'a>>,
-) -> Result<Expr, ParseError> {
+) -> Result<Expr, ParseError>
+{
     match input.peek() {
         Some(&Token::LParen) => {
             input.next();
@@ -896,7 +937,8 @@ fn parse_ident_expr<'a>(
     }
 }
 
-fn parse_array_expr<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr, ParseError> {
+fn parse_array_expr<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr, ParseError>
+{
     let mut arr = Vec::new();
 
     let skip_contents = match input.peek() {
@@ -926,7 +968,8 @@ fn parse_array_expr<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr,
     }
 }
 
-fn parse_primary<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr, ParseError> {
+fn parse_primary<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr, ParseError>
+{
     if let Some(token) = input.next() {
         match token {
             Token::IntConst(ref x) => Ok(Expr::IntConst(*x)),
@@ -953,7 +996,8 @@ fn parse_primary<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr, Pa
     }
 }
 
-fn parse_unary<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr, ParseError> {
+fn parse_unary<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr, ParseError>
+{
     let tok = match input.peek() {
         Some(tok) => tok.clone(),
         None => return Err(ParseError::InputPastEndOfFile),
@@ -980,7 +1024,8 @@ fn parse_binop<'a>(
     input: &mut Peekable<TokenIterator<'a>>,
     prec: i32,
     lhs: Expr,
-) -> Result<Expr, ParseError> {
+) -> Result<Expr, ParseError>
+{
     let mut lhs_curr = lhs;
 
     loop {
@@ -1026,6 +1071,8 @@ fn parse_binop<'a>(
                 Token::XOr => Expr::Op(Op::BitXor, Box::new(lhs_curr), Box::new(rhs)),
                 Token::LeftShift => Expr::Op(Op::Shl, Box::new(lhs_curr), Box::new(rhs)),
                 Token::RightShift => Expr::Op(Op::Shr, Box::new(lhs_curr), Box::new(rhs)),
+                Token::Period => Expr::Op(Op::Access, Box::new(lhs_curr), Box::new(rhs)),
+                Token::LessThanEqual => Expr::Op(Op::Le, Box::new(lhs_curr), Box::new(rhs)),
                 /* Token::PlusAssign => {
                     let lhs_copy = lhs_curr.clone();
                     Expr::Assignment(
@@ -1119,13 +1166,18 @@ fn parse_binop<'a>(
                         Box::new(Expr::FnCall("$~".to_string(), vec![lhs_copy, rhs])),
                     )
                 }*/
-                _ => return Err(ParseError::UnknownOperator),
+                v =>
+                /*return Err(ParseError::UnknownOperator)*/
+                {
+                    panic!("Unknown operator {:?}", v)
+                }
             };
         }
     }
 }
 
-fn parse_expr<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr, ParseError> {
+fn parse_expr<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr, ParseError>
+{
     match input.peek() {
         Some(Token::RParen) => Ok(Expr::Unit),
         _ => {
@@ -1136,7 +1188,8 @@ fn parse_expr<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr, Parse
     }
 }
 
-fn parse_if<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseError> {
+fn parse_if<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseError>
+{
     input.next();
 
     let guard = parse_expr(input)?;
@@ -1156,34 +1209,40 @@ fn parse_if<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseEr
     }
 }
 
-fn parse_for<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt,ParseError> {
+fn parse_for<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseError>
+{
     input.next();
     match input.next() {
-        Some(Token::LParen) => {},
+        Some(Token::LParen) => {}
         _ => return Err(ParseError::MissingLParen),
     }
     let value = parse_var(input)?;
     match input.next() {
-        Some(Token::Semicolon) => {},
+        Some(Token::Semicolon) => {}
         _ => return Err(ParseError::MissingSemicolon),
     }
     let condition = parse_expr(input)?;
     match input.next() {
-        Some(Token::Semicolon) => {},
+        Some(Token::Semicolon) => {}
         _ => return Err(ParseError::MissingSemicolon),
     }
     let expr = parse_expr(input)?;
     match input.next() {
-        Some(Token::RParen) => {},
+        Some(Token::RParen) => {}
         _ => return Err(ParseError::MissingRParen),
     }
     let block = parse_block(input)?;
 
-    Ok(Stmt::For(Box::new(value),Box::new(condition),Box::new(expr),Box::new(block)))
-
+    Ok(Stmt::For(
+        Box::new(value),
+        Box::new(condition),
+        Box::new(expr),
+        Box::new(block),
+    ))
 }
 
-fn parse_while<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseError> {
+fn parse_while<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseError>
+{
     input.next();
 
     let guard = parse_expr(input)?;
@@ -1192,7 +1251,8 @@ fn parse_while<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, Pars
     Ok(Stmt::While(Box::new(guard), Box::new(body)))
 }
 
-fn parse_loop<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseError> {
+fn parse_loop<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseError>
+{
     input.next();
 
     let body = parse_block(input)?;
@@ -1200,7 +1260,8 @@ fn parse_loop<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, Parse
     Ok(Stmt::Loop(Box::new(body)))
 }
 
-fn parse_label<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseError> {
+fn parse_label<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseError>
+{
     input.next();
     let name = match input.next() {
         Some(Token::Identifier(ref s)) => s.clone(),
@@ -1209,7 +1270,8 @@ fn parse_label<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, Pars
     return Ok(Stmt::Label(name.clone()));
 }
 
-fn parse_var<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseError> {
+fn parse_var<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseError>
+{
     input.next();
 
     let name = match input.next() {
@@ -1227,7 +1289,8 @@ fn parse_var<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseE
     }
 }
 
-fn parse_block<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseError> {
+fn parse_block<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseError>
+{
     match input.peek() {
         Some(&Token::LCurly) => (),
         Some(&Token::NewLine) => (),
@@ -1275,12 +1338,14 @@ fn parse_block<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, Pars
     }
 }
 
-fn parse_expr_stmt<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseError> {
+fn parse_expr_stmt<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseError>
+{
     let expr = parse_expr(input)?;
     Ok(Stmt::Expr(Box::new(expr)))
 }
 
-fn parse_stmt<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseError> {
+fn parse_stmt<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, ParseError>
+{
     match input.peek() {
         Some(&Token::If) => parse_if(input),
         Some(&Token::While) => parse_while(input),
@@ -1314,7 +1379,8 @@ fn parse_stmt<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, Parse
     }
 }
 
-fn parse_fn<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<FnDef, ParseError> {
+fn parse_fn<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<FnDef, ParseError>
+{
     input.next();
 
     let name = match input.next() {
@@ -1361,7 +1427,8 @@ fn parse_fn<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<FnDef, ParseE
     })
 }
 
-fn parse_top_level<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Vec<Global>, ParseError> {
+fn parse_top_level<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Vec<Global>, ParseError>
+{
     let mut globals = Vec::new();
     while let Some(_) = input.peek() {
         match input.peek() {
@@ -1379,6 +1446,7 @@ fn parse_top_level<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Vec<Gl
     Ok(globals)
 }
 
-pub fn parse<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Vec<Global>, ParseError> {
+pub fn parse<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Vec<Global>, ParseError>
+{
     parse_top_level(input)
 }

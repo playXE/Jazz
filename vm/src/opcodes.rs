@@ -1,4 +1,8 @@
-#[derive(Clone,Debug)]
+use colored;
+
+use self::colored::Colorize;
+
+#[derive(Clone)]
 pub enum Instruction
 {
     LoadString(usize,String),
@@ -24,7 +28,7 @@ pub enum Instruction
     ///
     /// Loading double value B to register A
     LoadDouble(usize, f64),
-    LoadObject(usize, usize),
+    
     /// LoadConst R(A) = C(B)
     ///
     /// Load constant from object pool to register A
@@ -58,18 +62,15 @@ pub enum Instruction
     Jump(usize),
     /// Jump (R(A) == false ? ip = B : continue)
     JumpF(usize, usize),
-    /// Jump (R(A) == true ? ip == B : continue)
-    JumpT(usize, usize),
 
     /// Goto
     ///
     /// Same as Jump instructions, but uses labels
     Goto(usize),
-    GotoT(usize, usize),
     GotoF(usize, usize),
 
     /// Push value from R(A) to arguments stack
-    PushArg(usize),
+    LoadArg(usize),
     /// R(A) = B(Args), C - Arg count, args poped from arg stack
     Call(usize, usize, usize),
 
@@ -81,6 +82,7 @@ pub enum Instruction
     Mul(usize, usize, usize),
     ///Div R(A) = R(B) / R(C)
     Div(usize, usize, usize),
+    Rem(usize,usize,usize),
     ///Gt R(A) = R(B) > R(C)
     Gt(usize, usize, usize),
     ///Lt R(A) = R(B) < R(C)
@@ -115,74 +117,105 @@ pub enum Instruction
 }
 
 
-/*impl fmt::Debug for Instruction
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
-    {
+use std::fmt;
+impl fmt::Display for Instruction {
+    fn fmt(&self,f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use self::Instruction::*;
+        
         match self {
-            Instruction::LoadFloat(reg, v) => write!(f, "LoadFloat R({}) = {}", reg, v),
-            Instruction::LoadInt(reg, v) => write!(f, "LoadInt R({}) = {}", reg, v),
-            Instruction::LoadDouble(reg, v) => write!(f, "LoadDouble R({}) = {}", reg, v),
-            Instruction::LoadLong(reg, v) => write!(f, "LoadLong R({}) = {}", reg, v),
-            Instruction::Ret(reg) => write!(f, "Ret R({})", reg),
-            Instruction::Ret0 => write!(f, "Ret R(Null)"),
-            Instruction::Jump(idx) => write!(f, "Jump ip = {}", idx),
-            Instruction::JumpF(reg, idx) => {
-                write!(f, "JumpF (R({}) == false) ? ip = {})", reg, idx)
-            }
-            Instruction::JumpT(reg, idx) => write!(f, "JumpT (R({}) == true ? ip = {})", reg, idx),
-            Instruction::Add(reg3, reg2, reg1) => {
-                write!(f, "Add R({}) = R({}) + R({})", reg3, reg2, reg1)
-            }
-            Instruction::Sub(reg3, reg2, reg1) => {
-                write!(f, "Sub R({}) = R({}) - R({})", reg3, reg2, reg1)
-            }
-            Instruction::Mul(reg3, reg2, reg1) => {
-                write!(f, "Mul R({}) = R({}) * R({})", reg3, reg2, reg1)
-            }
-            Instruction::Div(reg3, reg2, reg1) => {
-                write!(f, "Div R({}) = R({}) / R({})", reg3, reg2, reg1)
-            }
-            Instruction::Gt(reg3, reg2, reg1) => {
-                write!(f, "Gt R({}) = R({}) > R({})", reg3, reg2, reg1)
-            }
-            Instruction::Call(dest, r2, argc) => {
-                write!(f, "Call R({}) = R({})({})", dest, r2, argc)
-            }
-            Instruction::LoadObject(dest, pool_id) => {
-                write!(f, "LoadObject R({}) = P({})", dest, pool_id)
-            }
-            Instruction::Lt(reg3, reg2, reg1) => {
-                write!(f, "Lt R({}) = R({}) < R({})", reg3, reg2, reg1)
-            }
-            Instruction::Eq(reg3, reg2, reg1) => {
-                write!(f, "Lt R({}) = R({}) == R({})", reg3, reg2, reg1)
-            }
-            Instruction::Ge(reg3, reg2, reg1) => {
-                write!(f, "Lt R({}) = R({}) >= R({})", reg3, reg2, reg1)
-            }
-            Instruction::Le(reg3, reg2, reg1) => {
-                write!(f, "Lt R({}) = R({}) <= R({})", reg3, reg2, reg1)
-            }
-            Instruction::Label(id) => write!(f, "Label({:02})", id),
-            Instruction::Goto(lbl_id) => write!(f, "Goto {:02}", lbl_id),
-            Instruction::GotoF(reg, lbl_id) => {
-                write!(f, "GotoF R({}) is false ? ip = {:02}", reg, lbl_id)
-            }
-            Instruction::GotoT(reg, lbl_id) => {
-                write!(f, "GotoT R({}) is true ? ip = {:02}", reg, lbl_id)
-            }
-            Instruction::Move(reg1, reg2) => write!(f, "Move R({}) = R({})", reg1, reg2),
-            Instruction::LoadAt(dest, target, idx) => {
-                write!(f, "LoadAt R({}) = R({})[R({})]", dest, target, idx)
-            }
-            Instruction::StoreAt(dest, target, idx) => {
-                write!(f, "StoreAt R({})[{}] = R({})", target, idx, dest)
-            }
-            _v => write!(f, "Unimplemented!"),
+            Add(r3,r1,r2) => write!(f,"Add {} {} {}",r3,r1,r2),
+            Sub(r3,r1,r2) => write!(f,"Sub {} {} {}",r3,r1,r2),
+            Div(r3,r1,r2) => write!(f,"Div {} {} {}",r3,r1,r2),
+            Mul(r3,r1,r2) => write!(f,"Mul {} {} {}",r3,r1,r2),
+            Rem(r3,r1,r2) => write!(f,"Rem {} {} {}",r3,r1,r2),
+            Gt(r3,r1,r2) => write!(f,"Gt {} {} {} ",r3,r1,r2),
+            Lt(r3,r1,r2) => write!(f,"Lt {} {} {}",r3,r1,r2),
+            Le(r3,r1,r2) => write!(f,"Le {} {} {}",r3,r1,r2),
+            Ge(r3,r1,r2) => write!(f,"Ge {} {} {}",r3,r1,r2),
+            Eq(r3,r1,r2) => write!(f,"Eq {} {} {}",r3,r1,r2),
+            Ret0 => write!(f,"Ret0"),
+            Ret(r1) => write!(f,"Ret {}",r1),
+            Goto(label_id) => write!(f,"Goto {}",label_id),
+            GotoF(r1,label_id) => write!(f,"GotoF {} {}",r1,label_id),
+            Jump(ip) => write!(f,"Jump {}",ip),
+            JumpF(r1,ip) => write!(f,"JumpF {} {}",r1,ip),
+            LoadConst(r1,object_id) => write!(f,"LoadConst {} {}",r1,object_id),
+            LoadGlobal(r1,global) => write!(f, "LoadGlobal {} {}",r1,global),
+            LoadInt(r1,int) => write!(f, "LoadInt {} {}",r1,int),
+            LoadLong(r1,long) => write!(f,"LoadLong {} {}",r1,long),
+            LoadFloat(r1,float) => write!(f,"LoadFloat {} {}",r1,float),
+            LoadDouble(r1,double) => write!(f,"LoadDouble {} {}",r1,double),
+            LoadBool(r1,bool) => write!(f,"LoadBool {} {}",r1,bool),
+            LoadString(r1,str) => write!(f,"LoadString {} \"{}\"",r1,str),
+            StoreGlobal(r1,global) => write!(f,"StoreGlobal {} {}",r1,global),
+            StoreAt(r1,r2,r3) => write!(f,"StoreAt {} {} {}",r1,r2,r3),
+            Store(r1,r2,r3) => write!(f,"Store {} {} {}",r1,r2,r3),
+            LoadAt(r1,r2,r3) => write!(f,"LoadAt {} {} {}",r1,r2,r3),
+            BitAnd(r3,r1,r2) => write!(f,"BitAnd {} {} {}",r3,r1,r2),
+            BitOr(r3,r1,r2) => write!(f,"BitOr {} {} {}",r3,r1,r2),
+            BitXor(r3,r1,r2) => write!(f,"BitXor {} {} {}",r3,r1,r2),
+            Or(r3,r1,r2) => write!(f,"Or {} {} {}",r3,r1,r2),
+            And(r3,r1,r2) => write!(f,"And {} {} {}",r3,r1,r2),
+            Shr(r3,r1,r2) => write!(f,"Shr {} {} {}",r3,r1,r2),
+            Shl(r3,r1,r2) => write!(f,"Shl {} {} {}",r3,r1,r2),
+            Label(id) => write!(f,"Label {}",id),
+            Call(r3,r2,r1) => write!(f,"Call {} {} {}",r3,r2,r1),
+            LoadArg(r1) => write!(f,"LoadArg {}",r1),
+            Move(r1,r2) => write!(f,"Move {} {}",r1,r2),
+            LoadSuper(r3,r2,r1) => write!(f,"LoadSuper {} {} {}",r3,r2,r1),
         }
     }
-}*/
+}
+
+impl fmt::Debug for Instruction {
+    fn fmt(&self,f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use self::Instruction::*;
+        
+        match self {
+            Add(r3,r1,r2) => write!(f,"Add {} {} {}",r3,r1,r2),
+            Sub(r3,r1,r2) => write!(f,"Sub {} {} {}",r3,r1,r2),
+            Div(r3,r1,r2) => write!(f,"Div {} {} {}",r3,r1,r2),
+            Mul(r3,r1,r2) => write!(f,"Mul {} {} {}",r3,r1,r2),
+            Rem(r3,r1,r2) => write!(f,"Rem {} {} {}",r3,r1,r2),
+            Gt(r3,r1,r2) => write!(f,"Gt {} {} {} ",r3,r1,r2),
+            Lt(r3,r1,r2) => write!(f,"Lt {} {} {}",r3,r1,r2),
+            Le(r3,r1,r2) => write!(f,"Le {} {} {}",r3,r1,r2),
+            Ge(r3,r1,r2) => write!(f,"Ge {} {} {}",r3,r1,r2),
+            Eq(r3,r1,r2) => write!(f,"Eq {} {} {}",r3,r1,r2),
+            Ret0 => write!(f,"Ret0"),
+            Ret(r1) => write!(f,"Ret {}",r1),
+            Goto(label_id) => write!(f,"Goto {}",label_id),
+            GotoF(r1,label_id) => write!(f,"GotoF {} {}",r1,label_id),
+            Jump(ip) => write!(f,"Jump {}",ip),
+            JumpF(r1,ip) => write!(f,"JumpF {} {}",r1,ip),
+            LoadConst(r1,object_id) => write!(f,"LoadConst {} {}",r1,object_id),
+            LoadGlobal(r1,global) => write!(f, "LoadGlobal {} {}",r1,global),
+            LoadInt(r1,int) => write!(f, "LoadInt {} {}",r1,int),
+            LoadLong(r1,long) => write!(f,"LoadLong {} {}",r1,long),
+            LoadFloat(r1,float) => write!(f,"LoadFloat {} {}",r1,float),
+            LoadDouble(r1,double) => write!(f,"LoadDouble {} {}",r1,double),
+            LoadBool(r1,bool) => write!(f,"LoadBool {} {}",r1,bool),
+            LoadString(r1,str) => write!(f,"LoadString {} \"{}\"",r1,str),
+            StoreGlobal(r1,global) => write!(f,"StoreGlobal {} {}",r1,global),
+            StoreAt(r1,r2,r3) => write!(f,"StoreAt {} {} {}",r1,r2,r3),
+            Store(r1,r2,r3) => write!(f,"Store {} {} {}",r1,r2,r3),
+            LoadAt(r1,r2,r3) => write!(f,"LoadAt {} {} {}",r1,r2,r3),
+            BitAnd(r3,r1,r2) => write!(f,"BitAnd {} {} {}",r3,r1,r2),
+            BitOr(r3,r1,r2) => write!(f,"BitOr {} {} {}",r3,r1,r2),
+            BitXor(r3,r1,r2) => write!(f,"BitXor {} {} {}",r3,r1,r2),
+            Or(r3,r1,r2) => write!(f,"Or {} {} {}",r3,r1,r2),
+            And(r3,r1,r2) => write!(f,"And {} {} {}",r3,r1,r2),
+            Shr(r3,r1,r2) => write!(f,"Shr {} {} {}",r3,r1,r2),
+            Shl(r3,r1,r2) => write!(f,"Shl {} {} {}",r3,r1,r2),
+            Label(id) => write!(f,"Label {}",id),
+            Call(r3,r2,r1) => write!(f,"Call {} {} {}",r3,r2,r1),
+            LoadArg(r1) => write!(f,"LoadArg {}",r1),
+            Move(r1,r2) => write!(f,"Move {} {}",r1,r2),
+            LoadSuper(r3,r2,r1) => write!(f,"LoadSuper {} {} {}",r3,r2,r1),
+        }
+    }
+}
+
 
 ///Trait used for print Vec\<Instruction\>
 
@@ -198,7 +231,7 @@ impl DebugCode for Vec<Instruction>
     {
         let mut str = String::new();
         for i in 0..self.len() {
-            str.push_str(&format!("{:04} {:?}", i, self[i]));
+            str.push_str(&format!("{:04} {}", i, format!("{}",self[i]).white()));
             str.push('\n');
         }
         str

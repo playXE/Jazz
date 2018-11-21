@@ -1,0 +1,25 @@
+func map(array,fn) 
+{
+    var size = array.size();
+    var new_array = [];
+    
+    var i = 0;
+    while i < size {
+        var f = fn(array[i]);
+        new_array.push(f);
+        i = i + 1;
+    }
+    return new_array;
+}
+
+func mul2(a) 
+{
+    return a * 2;
+}
+
+func main()
+{
+   var array = [2,3,4];
+   var ret = map(array,mul2);
+   return ret;
+}

@@ -18,11 +18,11 @@ fn main()
     let func = machine.pool.allocate(Box::new(func));
 
     let code = vec![
-        Instruction::LoadObject(2, func),
-        Instruction::LoadObject(1, string),
-        Instruction::PushArg(2),
+        Instruction::LoadConst(2, func),
+        Instruction::LoadConst(1, string),
+        Instruction::LoadArg(2),
         Instruction::LoadAt(2, 2, 1),
-        Instruction::PushArg(2),
+        Instruction::LoadArg(2),
         Instruction::Call(2, 2, 0),
         Instruction::Ret(2),
     ];
