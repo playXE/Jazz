@@ -3,23 +3,29 @@ func map(array,fn)
     var size = array.size();
     var new_array = [];
     
-    var i = 0;
-    while i < size {
-        var f = fn(array[i]);
-        new_array.push(f);
-        i = i + 1;
+    for (var k = 0; k < size;k = k + 1) {
+        
+        new_array.push(fn(array[k]));
     }
     return new_array;
 }
 
-func mul2(a) 
-{
-    return a * 2;
+func fib(n) {
+    if n == 0 || n == 1 {
+        return n;
+    }
+
+    return fib(n - 1) + fib(n - 2);
+
+
 }
 
 func main()
 {
-   var array = [2,3,4];
-   var ret = map(array,mul2);
+   var array = [];
+   for (var i = 0;i < 27; i = i + 1) {
+       array.push(i);
+   }
+   var ret = map(array,fib);
    return ret;
 }

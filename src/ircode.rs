@@ -152,6 +152,12 @@ impl FunctionBuilder
         return register;
     }
 
+    pub fn long_const(&mut self,long: i64) -> usize {
+        let register = self.register_push_temp();
+        self.list.push(Instruction::LoadLong(register, long));
+        return register;
+    }
+
     pub fn float_const(&mut self, float: f32) -> usize
     {
         let register = self.register_push_temp();
@@ -159,6 +165,12 @@ impl FunctionBuilder
         return register;
     }
 
+    pub fn double_const(&mut self, float: f64) -> usize
+    {
+        let register = self.register_push_temp();
+        self.list.push(Instruction::LoadDouble(register, float));
+        return register;
+    }
     pub fn register_pop(&mut self) -> usize
     {
         self.register_pop_context_protect(false)

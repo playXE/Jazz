@@ -243,7 +243,13 @@ impl<'a> Compiler<'a>
     {
         match expr {
             Expr::IntConst(int) => {
-                self.builder.int_const(int as i32);
+                use std::i32;
+                if int >= i32::MAX as i64 {
+                    self.builder.long_const(int);
+                } else {
+                    self.builder.int_const(int as i32);
+                }
+                
             }
             Expr::FloatConst(float) => {
                 self.builder.float_const(float as f32);
