@@ -34,7 +34,8 @@ use std::any::Any;
 
 impl Object for String
 {
-    fn typename(&self) -> String {
+    fn typename(&self) -> String
+    {
         String::from("String")
     }
 

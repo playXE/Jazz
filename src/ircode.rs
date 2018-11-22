@@ -152,7 +152,8 @@ impl FunctionBuilder
         return register;
     }
 
-    pub fn long_const(&mut self,long: i64) -> usize {
+    pub fn long_const(&mut self, long: i64) -> usize
+    {
         let register = self.register_push_temp();
         self.list.push(Instruction::LoadLong(register, long));
         return register;

@@ -1,5 +1,4 @@
-use crate::{frame::*, object_pool::ObjectPool, opcodes::*, value::Value};
-use crate::object::ObjectAddon;
+use crate::{frame::*, object::ObjectAddon, object_pool::ObjectPool, opcodes::*, value::Value};
 use std::collections::HashMap;
 
 macro_rules! for_c {
@@ -55,7 +54,6 @@ impl Machine
 
     pub fn set(&mut self, r: usize, v: Value)
     {
-
         self.last_frame_mut().set(r, v);
     }
 
@@ -69,7 +67,7 @@ impl Machine
         let id = match callable {
             Value::Object(id) => id,
             v => {
-                panic!("Not callable {:?}",v);
+                panic!("Not callable {:?}", v);
             }
         };
 
@@ -112,14 +110,14 @@ impl Machine
         let mut returns = false;
         let mut ret = Value::Null;
         let start = super::time::PreciseTime::now();
-        
+
         while self.last_frame().ip < self.last_frame().code.len() {
             if returns {
                 break;
             }
-            
+
             let opcode = self.last_frame().code[self.last_frame().ip].clone();
-            
+
             match &opcode {
                 Instruction::Label(_label_id) => {}
 
@@ -136,10 +134,10 @@ impl Machine
                     self.set(*dest, Value::Int(*int));
                 }
 
-                Instruction::LoadString(r1,ref string) => {
+                Instruction::LoadString(r1, ref string) => {
                     let string = string.to_string();
                     let object_id = self.pool.allocate(Box::new(string));
-                    self.set(*r1,Value::Object(object_id));
+                    self.set(*r1, Value::Object(object_id));
                 }
 
                 Instruction::LoadDouble(dest, double) => {
@@ -166,10 +164,10 @@ impl Machine
                         (Value::Long(i), Value::Int(i2)) => Value::Long(i + (i2 as i64)),
                         (Value::Float(f), Value::Double(f2)) => Value::Double((f as f64) + f2),
                         (Value::Double(f), Value::Float(f2)) => Value::Double(f + (f2 as f64)),
-                        (Value::Long(l),v) => Value::Long(l + v.to_long(self)),
-                        (Value::Int(i),v) => Value::Int(i + v.to_int(self)),
+                        (Value::Long(l), v) => Value::Long(l + v.to_long(self)),
+                        (Value::Int(i), v) => Value::Int(i + v.to_int(self)),
                         (Value::Double(d), v) => Value::Double(d + v.to_double(self)),
-                        (Value::Float(f),v) => Value::Float(f + v.to_float(self)),
+                        (Value::Float(f), v) => Value::Float(f + v.to_float(self)),
                         (v, Value::Null) => v,
                         (Value::Null, v) => v,
                         v => panic!("{:?}", v),
@@ -186,13 +184,12 @@ impl Machine
                             .arg_stack
                             .pop()
                             .expect("Expected this value");
-                        
+
                         temp.push(this);
-                        
+
                         for _ in 0..*argc {
-                            
                             let v = self.last_frame_mut().arg_stack.pop();
-                            
+
                             match v {
                                 None => temp.push(Value::Null), // if less arguments are passed then fill the holes with Null values
                                 Some(v) => temp.push(v),
@@ -205,8 +202,10 @@ impl Machine
                     let value = self.get(*r2);
                     let v = self.invoke(value, args);
                     self.stack.pop();
-                    
                     self.set(*dest, v);
+
+                    self.dispatch();
+                    continue;
                 }
                 Instruction::Sub(dest, r1, r2) => {
                     let (v1, v2) = (self.get(*r1), self.get(*r2));
@@ -220,10 +219,10 @@ impl Machine
                         (Value::Long(i), Value::Int(i2)) => Value::Long(i - (i2 as i64)),
                         (Value::Float(f), Value::Double(f2)) => Value::Double((f as f64) - f2),
                         (Value::Double(f), Value::Float(f2)) => Value::Double(f - (f2 as f64)),
-                        (Value::Long(l),v) => Value::Long(l - v.to_long(self)),
-                        (Value::Int(i),v) => Value::Int(i - v.to_int(self)),
+                        (Value::Long(l), v) => Value::Long(l - v.to_long(self)),
+                        (Value::Int(i), v) => Value::Int(i - v.to_int(self)),
                         (Value::Double(d), v) => Value::Double(d - v.to_double(self)),
-                        (Value::Float(f),v) => Value::Float(f - v.to_float(self)),
+                        (Value::Float(f), v) => Value::Float(f - v.to_float(self)),
                         (v, Value::Null) => v,
                         (Value::Null, v) => v,
                         _ => unimplemented!(),
@@ -244,10 +243,10 @@ impl Machine
                         (Value::Long(i), Value::Int(i2)) => Value::Long(i / (i2 as i64)),
                         (Value::Float(f), Value::Double(f2)) => Value::Double((f as f64) / f2),
                         (Value::Double(f), Value::Float(f2)) => Value::Double(f / (f2 as f64)),
-                        (Value::Long(l),v) => Value::Long(l / v.to_long(self)),
-                        (Value::Int(i),v) => Value::Int(i / v.to_int(self)),
+                        (Value::Long(l), v) => Value::Long(l / v.to_long(self)),
+                        (Value::Int(i), v) => Value::Int(i / v.to_int(self)),
                         (Value::Double(d), v) => Value::Double(d / v.to_double(self)),
-                        (Value::Float(f),v) => Value::Float(f / v.to_float(self)),
+                        (Value::Float(f), v) => Value::Float(f / v.to_float(self)),
                         (v, Value::Null) => v,
                         (Value::Null, v) => v,
                         _ => unimplemented!(),
@@ -268,20 +267,20 @@ impl Machine
                         (Value::Long(i), Value::Int(i2)) => Value::Long(i * (i2 as i64)),
                         (Value::Float(f), Value::Double(f2)) => Value::Double((f as f64) * f2),
                         (Value::Double(f), Value::Float(f2)) => Value::Double(f * (f2 as f64)),
-                        (Value::Long(l),v) => Value::Long(l * v.to_long(self)),
-                        (Value::Int(i),v) => Value::Int(i * v.to_int(self)),
+                        (Value::Long(l), v) => Value::Long(l * v.to_long(self)),
+                        (Value::Int(i), v) => Value::Int(i * v.to_int(self)),
                         (Value::Double(d), v) => Value::Double(d * v.to_double(self)),
-                        (Value::Float(f),v) => Value::Float(f * v.to_float(self)),
+                        (Value::Float(f), v) => Value::Float(f * v.to_float(self)),
                         (v, Value::Null) => v,
                         (Value::Null, v) => v,
-                        v => panic!("Cannot mul {:?}",v),
+                        v => panic!("Cannot mul {:?}", v),
                     };
 
                     self.set(*dest, result);
                 }
 
                 Instruction::LoadConst(r1, idx) => {
-                    self.set(*r1,Value::Object(*idx));
+                    self.set(*r1, Value::Object(*idx));
                 }
 
                 Instruction::Gt(dest, r1, r2) => {
@@ -295,13 +294,13 @@ impl Machine
                         (Value::Long(i), Value::Int(i2)) => Value::Bool(i > (i2 as i64)),
                         (Value::Float(f), Value::Double(f2)) => Value::Bool((f as f64) > f2),
                         (Value::Double(f), Value::Float(f2)) => Value::Bool(f > (f2 as f64)),
-                        (Value::Long(l),v) => Value::Bool(l > v.to_long(self)),
-                        (Value::Int(i),v) => Value::Bool(i > v.to_int(self)),
+                        (Value::Long(l), v) => Value::Bool(l > v.to_long(self)),
+                        (Value::Int(i), v) => Value::Bool(i > v.to_int(self)),
                         (Value::Double(d), v) => Value::Bool(d > v.to_double(self)),
-                        (Value::Float(f),v) => Value::Bool(f > v.to_float(self)),
+                        (Value::Float(f), v) => Value::Bool(f > v.to_float(self)),
                         (v, Value::Null) => v,
                         (Value::Null, v) => v,
-                        v => panic!("{:?}",v),
+                        v => panic!("{:?}", v),
                     };
 
                     self.set(*dest, result);
@@ -317,10 +316,10 @@ impl Machine
                         (Value::Long(i), Value::Int(i2)) => Value::Bool(i >= (i2 as i64)),
                         (Value::Float(f), Value::Double(f2)) => Value::Bool((f as f64) >= f2),
                         (Value::Double(f), Value::Float(f2)) => Value::Bool(f >= (f2 as f64)),
-                        (Value::Long(l),v) => Value::Bool(l >= v.to_long(self)),
-                        (Value::Int(i),v) => Value::Bool(i >= v.to_int(self)),
+                        (Value::Long(l), v) => Value::Bool(l >= v.to_long(self)),
+                        (Value::Int(i), v) => Value::Bool(i >= v.to_int(self)),
                         (Value::Double(d), v) => Value::Bool(d >= v.to_double(self)),
-                        (Value::Float(f),v) => Value::Bool(f >= v.to_float(self)),
+                        (Value::Float(f), v) => Value::Bool(f >= v.to_float(self)),
                         (v, Value::Null) => v,
                         (Value::Null, v) => v,
                         _ => unimplemented!(),
@@ -340,10 +339,10 @@ impl Machine
                         (Value::Long(i), Value::Int(i2)) => Value::Bool(i <= (i2 as i64)),
                         (Value::Float(f), Value::Double(f2)) => Value::Bool((f as f64) <= f2),
                         (Value::Double(f), Value::Float(f2)) => Value::Bool(f <= (f2 as f64)),
-                        (Value::Long(l),v) => Value::Bool(l <= v.to_long(self)),
-                        (Value::Int(i),v) => Value::Bool(i <= v.to_int(self)),
+                        (Value::Long(l), v) => Value::Bool(l <= v.to_long(self)),
+                        (Value::Int(i), v) => Value::Bool(i <= v.to_int(self)),
                         (Value::Double(d), v) => Value::Bool(d <= v.to_double(self)),
-                        (Value::Float(f),v) => Value::Bool(f <= v.to_float(self)),
+                        (Value::Float(f), v) => Value::Bool(f <= v.to_float(self)),
                         (v, Value::Null) => v,
                         (Value::Null, v) => v,
                         _ => unimplemented!(),
@@ -363,86 +362,86 @@ impl Machine
                         (Value::Long(i), Value::Int(i2)) => Value::Bool(i < (i2 as i64)),
                         (Value::Float(f), Value::Double(f2)) => Value::Bool((f as f64) < f2),
                         (Value::Double(f), Value::Float(f2)) => Value::Bool(f < (f2 as f64)),
-                        (Value::Long(l),v) => Value::Bool(l < v.to_long(self)),
-                        (Value::Int(i),v) => Value::Bool(i < v.to_int(self)),
+                        (Value::Long(l), v) => Value::Bool(l < v.to_long(self)),
+                        (Value::Int(i), v) => Value::Bool(i < v.to_int(self)),
                         (Value::Double(d), v) => Value::Bool(d < v.to_double(self)),
-                        (Value::Float(f),v) => Value::Bool(f < v.to_float(self)),
+                        (Value::Float(f), v) => Value::Bool(f < v.to_float(self)),
                         (v, Value::Null) => v,
                         (Value::Null, v) => v,
-                        (v,v1) => panic!("{:?} < {:?}",v.to_String(self),v1.to_String(self)),
+                        (v, v1) => panic!("{:?} < {:?}", v.to_String(self), v1.to_String(self)),
                     };
 
                     self.set(*dest, result);
                 }
-                Instruction::BitAnd(r3,r1,r2) => {
-                    let (v1,v2) = (self.get(*r1),self.get(*r2));
+                Instruction::BitAnd(r3, r1, r2) => {
+                    let (v1, v2) = (self.get(*r1), self.get(*r2));
 
-                    let result = match (v1,v2) {
-                        (Value::Long(l),Value::Long(l1)) => Value::Long(l & l1),
-                        (Value::Int(i),Value::Int(i2)) => Value::Int(i & i2),
-                        v => panic!("BitAnd cannot be aplied to {:?}",v),
+                    let result = match (v1, v2) {
+                        (Value::Long(l), Value::Long(l1)) => Value::Long(l & l1),
+                        (Value::Int(i), Value::Int(i2)) => Value::Int(i & i2),
+                        v => panic!("BitAnd cannot be aplied to {:?}", v),
                     };
-                    self.set(*r3,result);
+                    self.set(*r3, result);
                 }
-                Instruction::BitOr(r3,r1,r2) => {
-                    let (v1,v2) = (self.get(*r1),self.get(*r2));
+                Instruction::BitOr(r3, r1, r2) => {
+                    let (v1, v2) = (self.get(*r1), self.get(*r2));
 
-                    let result = match (v1,v2) {
-                        (Value::Long(l),Value::Long(l1)) => Value::Long(l | l1),
-                        (Value::Int(i),Value::Int(i2)) => Value::Int(i | i2),
-                        v => panic!("BitOr cannot be aplied to {:?}",v),
+                    let result = match (v1, v2) {
+                        (Value::Long(l), Value::Long(l1)) => Value::Long(l | l1),
+                        (Value::Int(i), Value::Int(i2)) => Value::Int(i | i2),
+                        v => panic!("BitOr cannot be aplied to {:?}", v),
                     };
-                    self.set(*r3,result);
+                    self.set(*r3, result);
                 }
-                Instruction::BitXor(r3,r1,r2) => {
-                    let (v1,v2) = (self.get(*r1),self.get(*r2));
+                Instruction::BitXor(r3, r1, r2) => {
+                    let (v1, v2) = (self.get(*r1), self.get(*r2));
 
-                    let result = match (v1,v2) {
-                        (Value::Long(l),Value::Long(l1)) => Value::Long(l ^ l1),
-                        (Value::Int(i),Value::Int(i2)) => Value::Int(i ^ i2),
-                        v => panic!("BitOr cannot be aplied to {:?}",v),
+                    let result = match (v1, v2) {
+                        (Value::Long(l), Value::Long(l1)) => Value::Long(l ^ l1),
+                        (Value::Int(i), Value::Int(i2)) => Value::Int(i ^ i2),
+                        v => panic!("BitOr cannot be aplied to {:?}", v),
                     };
-                    self.set(*r3,result);
+                    self.set(*r3, result);
                 }
-                Instruction::Shl(r3,r1,r2) => {
-                    let (v1,v2) = (self.get(*r1),self.get(*r2));
+                Instruction::Shl(r3, r1, r2) => {
+                    let (v1, v2) = (self.get(*r1), self.get(*r2));
 
-                    let result = match (v1,v2) {
-                        (Value::Long(l),Value::Long(l1)) => Value::Long(l << l1),
-                        (Value::Int(i),Value::Int(i2)) => Value::Int(i << i2),
-                        v => panic!("BitOr cannot be aplied to {:?}",v),
+                    let result = match (v1, v2) {
+                        (Value::Long(l), Value::Long(l1)) => Value::Long(l << l1),
+                        (Value::Int(i), Value::Int(i2)) => Value::Int(i << i2),
+                        v => panic!("BitOr cannot be aplied to {:?}", v),
                     };
-                    self.set(*r3,result);
-                } 
-                Instruction::Shr(r3,r1,r2) => {
-                    let (v1,v2) = (self.get(*r1),self.get(*r2));
-
-                    let result = match (v1,v2) {
-                        (Value::Long(l),Value::Long(l1)) => Value::Long(l >> l1),
-                        (Value::Int(i),Value::Int(i2)) => Value::Int(i >> i2),
-                        v => panic!("BitOr cannot be aplied to {:?}",v),
-                    };
-                    self.set(*r3,result);
-                }                                 
-                Instruction::And(r3,r1,r2) => {
-                    let (v1,v2) = (self.get(*r1),self.get(*r2));
-
-                    let result = match (v1,v2) {
-                        (Value::Bool(b),Value::Bool(b2)) => Value::Bool(b && b2),
-                        v => panic!("And cannot be aplied to {:?}",v),
-                    };
-
-                    self.set(*r3,result);
+                    self.set(*r3, result);
                 }
-                Instruction::Or(r3,r1,r2) => {
-                    let (v1,v2) = (self.get(*r1),self.get(*r2));
+                Instruction::Shr(r3, r1, r2) => {
+                    let (v1, v2) = (self.get(*r1), self.get(*r2));
 
-                    let result = match (v1,v2) {
-                        (Value::Bool(b),Value::Bool(b2)) => Value::Bool(b || b2),
-                        v => panic!("Or cannot be aplied to {:?}",v),
+                    let result = match (v1, v2) {
+                        (Value::Long(l), Value::Long(l1)) => Value::Long(l >> l1),
+                        (Value::Int(i), Value::Int(i2)) => Value::Int(i >> i2),
+                        v => panic!("BitOr cannot be aplied to {:?}", v),
+                    };
+                    self.set(*r3, result);
+                }
+                Instruction::And(r3, r1, r2) => {
+                    let (v1, v2) = (self.get(*r1), self.get(*r2));
+
+                    let result = match (v1, v2) {
+                        (Value::Bool(b), Value::Bool(b2)) => Value::Bool(b && b2),
+                        v => panic!("And cannot be aplied to {:?}", v),
                     };
 
-                    self.set(*r3,result);
+                    self.set(*r3, result);
+                }
+                Instruction::Or(r3, r1, r2) => {
+                    let (v1, v2) = (self.get(*r1), self.get(*r2));
+
+                    let result = match (v1, v2) {
+                        (Value::Bool(b), Value::Bool(b2)) => Value::Bool(b || b2),
+                        v => panic!("Or cannot be aplied to {:?}", v),
+                    };
+
+                    self.set(*r3, result);
                 }
                 Instruction::Eq(r3, r1, r2) => {
                     let (v1, v2) = (self.get(*r1), self.get(*r2));
@@ -455,12 +454,12 @@ impl Machine
                         (Value::Long(i), Value::Int(i2)) => Value::Bool(i == (i2 as i64)),
                         (Value::Float(f), Value::Double(f2)) => Value::Bool((f as f64) == f2),
                         (Value::Double(f), Value::Float(f2)) => Value::Bool(f == (f2 as f64)),
-                        (Value::Long(l),v) => Value::Bool(l == v.to_long(self)),
-                        (Value::Int(i),v) => Value::Bool(i == v.to_int(self)),
+                        (Value::Long(l), v) => Value::Bool(l == v.to_long(self)),
+                        (Value::Int(i), v) => Value::Bool(i == v.to_int(self)),
                         (Value::Double(d), v) => Value::Bool(d < v.to_double(self)),
-                        (Value::Float(f),v) => Value::Bool(f == v.to_float(self)),
-                        (v, Value::Null) => Value::Bool(false),
-                        (Value::Null, v) => Value::Bool(false),
+                        (Value::Float(f), v) => Value::Bool(f == v.to_float(self)),
+                        (_v, Value::Null) => Value::Bool(false),
+                        (Value::Null, _v) => Value::Bool(false),
                         _ => unimplemented!(),
                     };
 
@@ -476,7 +475,6 @@ impl Machine
                     }
                 }
 
-                
                 Instruction::GotoF(r1, lbl_id) => match self.get(*r1) {
                     Value::Bool(b) => {
                         if !b {
@@ -488,8 +486,21 @@ impl Machine
                             }
                         }
                     }
-                    
-                    v => panic!("Failed GotoF {} {:?}\n prev opcode {:?}",r1,v,self.last_frame().code[self.last_frame().ip - 1]),
+                    Value::Null => {
+                        if self.labels.contains_key(lbl_id) {
+                            let idx = self.labels.get(lbl_id).unwrap();
+                            self.branch(*idx);
+                        } else {
+                            panic!("Label with id `{}`,doesn't exists", lbl_id)
+                        }
+                    }
+
+                    v => panic!(
+                        "Failed GotoF {} {:?}\n prev opcode {:?}",
+                        r1,
+                        v,
+                        self.last_frame().code[self.last_frame().ip - 1]
+                    ),
                 },
 
                 Instruction::Jump(idx) => {
@@ -517,7 +528,7 @@ impl Machine
                             self.branch(*idx);
                         }
                     } else {
-                        println!("{:?}",v);
+                        println!("{:?}", v);
                         panic!("");
                     }
                 }
@@ -538,12 +549,14 @@ impl Machine
                 Instruction::LoadAt(r1, r2, r3) => {
                     let v2 = self.get(*r2);
                     let v3 = self.get(*r3);
-                    
+
                     if let Value::Object(obj_id) = v2 {
+                        //let this = self.last_frame_mut().arg_stack.pop().expect("No this value");
                         let obj = self.pool.get(obj_id);
                         let this = self.get(*r2);
                         obj.load_at(self, vec![this, v3], *r1);
                     } else {
+                        println!("Found: {:?}", v2);
                         panic!("Expected Object value");
                     }
                 }
@@ -560,12 +573,9 @@ impl Machine
                     }
                 }
 
-                
-
-                v => panic!("{:?}",v),
+                v => panic!("{:?}", v),
             }
             self.last_frame_mut().ip += 1;
-            
         }
         let end = super::time::PreciseTime::now();
 

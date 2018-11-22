@@ -8,23 +8,26 @@ pub enum Function
     Native(NativeFunction),
 }
 
-impl Clone for Function {
-    fn clone(&self) -> Function {
+impl Clone for Function
+{
+    fn clone(&self) -> Function
+    {
         match self {
-            Function::Virtual(vf) => {
-                Function::Virtual(vf.clone())
-            }
+            Function::Virtual(vf) => Function::Virtual(vf.clone()),
             Function::Native(_) => panic!("Cannot clone native func"),
         }
     }
 }
 
-impl crate::object::ObjectAddon for Function {
-    fn as_function(&self) -> &Function {
+impl crate::object::ObjectAddon for Function
+{
+    fn as_function(&self) -> &Function
+    {
         self
     }
 
-    fn to_String(&self,_m: &mut Machine) -> String {
+    fn to_String(&self, _m: &mut Machine) -> String
+    {
         String::from("function")
     }
 }
@@ -78,26 +81,22 @@ impl Object for Function
     /// Call object
     fn call(&self, m: &mut Machine, args: Vec<Value>) -> Value
     {
-        
-            let ret = match self {
-                Function::Virtual(ref vf) => {
-                    let func = vf.clone();
-                    for i in 0..args.len() {
-                        m.last_frame_mut().stack[i] = args[i];
-                    }
-                    let code = func.code;
-                    m.run_code(code.clone())
+        let ret = match self {
+            Function::Virtual(ref vf) => {
+                //println!("{:?}",args);
+                let func = vf.clone();
+                for i in 0..args.len() {
+                    m.last_frame_mut().stack[i] = args[i];
                 }
+                let code = func.code;
+                m.run_code(code.clone())
+            }
 
-                Function::Native(nv) => nv.0(m,args),
-            };
-            return ret;
-        
+            Function::Native(nv) => nv.0(m, args),
+        };
+        return ret;
     }
 }
-
-
-
 
 #[derive(Clone, Debug)]
 pub struct VirtualFunction

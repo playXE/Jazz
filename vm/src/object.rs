@@ -1,7 +1,12 @@
 use crate::{machine::Machine, object_pool::ObjectPool, value::Value};
 use std::any::Any;
-pub trait Object: Send + ObjectAddon 
+pub trait Object: Send + ObjectAddon
 {
+    fn o_clone(&self, _m: &mut Machine) -> Value
+    {
+        panic!("Cannot clone!");
+    }
+
     fn typename(&self) -> String
     {
         String::from("Object")
@@ -18,12 +23,13 @@ pub trait Object: Send + ObjectAddon
 
     fn store_at(&self, _m: &mut Machine, _args: Vec<Value>, _rindex: usize)
     {
-        panic!("Cannot store_at");
+        println!("{:?}", _args);
+        panic!("Cannot store_at, {}", self.to_String(_m));
     }
 
     fn load_at(&self, _m: &mut Machine, _args: Vec<Value>, _rindex: usize)
     {
-        panic!("Cannot load_at. {:?}",self.to_String(_m));
+        panic!("Cannot load_at. {:?}", self.to_String(_m));
     }
 
     fn as_any(&self) -> &dyn Any;
@@ -40,7 +46,8 @@ pub trait ObjectAddon
         String::new()
     }
 
-    fn as_bytes(&self,_: &mut Machine) -> Vec<u8> {
+    fn as_bytes(&self, _: &mut Machine) -> Vec<u8>
+    {
         Vec::new()
     }
 
@@ -63,7 +70,33 @@ pub trait ObjectAddon
         0.0
     }
 
-    fn as_function(&self) -> &crate::function::Function {
+    fn as_function(&self) -> &crate::function::Function
+    {
         panic!()
+    }
+
+    fn eq(&self, _m: &mut Machine) -> bool
+    {
+        false
+    }
+
+    fn add(&self, _rhs: Value, _m: &mut Machine) -> Value
+    {
+        Value::Null
+    }
+
+    fn sub(&self, _rhs: Value, _m: &mut Machine) -> Value
+    {
+        Value::Null
+    }
+
+    fn div(&self, _rhs: Value, _m: &mut Machine) -> Value
+    {
+        Value::Null
+    }
+
+    fn not(&self, _m: &mut Machine) -> bool
+    {
+        false
     }
 }
