@@ -5,7 +5,7 @@ use self::colored::Colorize;
 #[derive(Clone)]
 pub enum Instruction
 {
-    LoadString(usize,String),
+    LoadString(usize, String),
 
     /// LoadBool R(A) = B
     ///
@@ -28,7 +28,7 @@ pub enum Instruction
     ///
     /// Loading double value B to register A
     LoadDouble(usize, f64),
-    
+
     /// LoadConst R(A) = C(B)
     ///
     /// Load constant from object pool to register A
@@ -74,6 +74,7 @@ pub enum Instruction
     /// R(A) = B(Args), C - Arg count, args poped from arg stack
     Call(usize, usize, usize),
 
+    Not(usize, usize),
     ///Add R(A) = R(B) + R(C)
     Add(usize, usize, usize),
     ///Sub R(A) = R(B) - R(C)
@@ -82,7 +83,7 @@ pub enum Instruction
     Mul(usize, usize, usize),
     ///Div R(A) = R(B) / R(C)
     Div(usize, usize, usize),
-    Rem(usize,usize,usize),
+    Rem(usize, usize, usize),
     ///Gt R(A) = R(B) > R(C)
     Gt(usize, usize, usize),
     ///Lt R(A) = R(B) < R(C)
@@ -106,9 +107,8 @@ pub enum Instruction
     /// Create label with id A
     Label(usize),
 
-
-    Shr(usize,usize,usize),
-    Shl(usize,usize,usize),
+    Shr(usize, usize, usize),
+    Shl(usize, usize, usize),
     BitOr(usize, usize, usize),
     BitXor(usize, usize, usize),
     BitAnd(usize, usize, usize),
@@ -116,106 +116,110 @@ pub enum Instruction
     Or(usize, usize, usize),
 }
 
-
 use std::fmt;
-impl fmt::Display for Instruction {
-    fn fmt(&self,f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl fmt::Display for Instruction
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
+    {
         use self::Instruction::*;
-        
+
         match self {
-            Add(r3,r1,r2) => write!(f,"Add {} {} {}",r3,r1,r2),
-            Sub(r3,r1,r2) => write!(f,"Sub {} {} {}",r3,r1,r2),
-            Div(r3,r1,r2) => write!(f,"Div {} {} {}",r3,r1,r2),
-            Mul(r3,r1,r2) => write!(f,"Mul {} {} {}",r3,r1,r2),
-            Rem(r3,r1,r2) => write!(f,"Rem {} {} {}",r3,r1,r2),
-            Gt(r3,r1,r2) => write!(f,"Gt {} {} {} ",r3,r1,r2),
-            Lt(r3,r1,r2) => write!(f,"Lt {} {} {}",r3,r1,r2),
-            Le(r3,r1,r2) => write!(f,"Le {} {} {}",r3,r1,r2),
-            Ge(r3,r1,r2) => write!(f,"Ge {} {} {}",r3,r1,r2),
-            Eq(r3,r1,r2) => write!(f,"Eq {} {} {}",r3,r1,r2),
-            Ret0 => write!(f,"Ret0"),
-            Ret(r1) => write!(f,"Ret {}",r1),
-            Goto(label_id) => write!(f,"Goto {}",label_id),
-            GotoF(r1,label_id) => write!(f,"GotoF {} {}",r1,label_id),
-            Jump(ip) => write!(f,"Jump {}",ip),
-            JumpF(r1,ip) => write!(f,"JumpF {} {}",r1,ip),
-            LoadConst(r1,object_id) => write!(f,"LoadConst {} {}",r1,object_id),
-            LoadGlobal(r1,global) => write!(f, "LoadGlobal {} {}",r1,global),
-            LoadInt(r1,int) => write!(f, "LoadInt {} {}",r1,int),
-            LoadLong(r1,long) => write!(f,"LoadLong {} {}",r1,long),
-            LoadFloat(r1,float) => write!(f,"LoadFloat {} {}",r1,float),
-            LoadDouble(r1,double) => write!(f,"LoadDouble {} {}",r1,double),
-            LoadBool(r1,bool) => write!(f,"LoadBool {} {}",r1,bool),
-            LoadString(r1,str) => write!(f,"LoadString {} \"{}\"",r1,str),
-            StoreGlobal(r1,global) => write!(f,"StoreGlobal {} {}",r1,global),
-            StoreAt(r1,r2,r3) => write!(f,"StoreAt {} {} {}",r1,r2,r3),
-            Store(r1,r2,r3) => write!(f,"Store {} {} {}",r1,r2,r3),
-            LoadAt(r1,r2,r3) => write!(f,"LoadAt {} {} {}",r1,r2,r3),
-            BitAnd(r3,r1,r2) => write!(f,"BitAnd {} {} {}",r3,r1,r2),
-            BitOr(r3,r1,r2) => write!(f,"BitOr {} {} {}",r3,r1,r2),
-            BitXor(r3,r1,r2) => write!(f,"BitXor {} {} {}",r3,r1,r2),
-            Or(r3,r1,r2) => write!(f,"Or {} {} {}",r3,r1,r2),
-            And(r3,r1,r2) => write!(f,"And {} {} {}",r3,r1,r2),
-            Shr(r3,r1,r2) => write!(f,"Shr {} {} {}",r3,r1,r2),
-            Shl(r3,r1,r2) => write!(f,"Shl {} {} {}",r3,r1,r2),
-            Label(id) => write!(f,"Label {}",id),
-            Call(r3,r2,r1) => write!(f,"Call {} {} {}",r3,r2,r1),
-            LoadArg(r1) => write!(f,"LoadArg {}",r1),
-            Move(r1,r2) => write!(f,"Move {} {}",r1,r2),
-            LoadSuper(r3,r2,r1) => write!(f,"LoadSuper {} {} {}",r3,r2,r1),
+            Not(r1, r2) => write!(f, "Not {} {}", r1, r2),
+            Add(r3, r1, r2) => write!(f, "Add {} {} {}", r3, r1, r2),
+            Sub(r3, r1, r2) => write!(f, "Sub {} {} {}", r3, r1, r2),
+            Div(r3, r1, r2) => write!(f, "Div {} {} {}", r3, r1, r2),
+            Mul(r3, r1, r2) => write!(f, "Mul {} {} {}", r3, r1, r2),
+            Rem(r3, r1, r2) => write!(f, "Rem {} {} {}", r3, r1, r2),
+            Gt(r3, r1, r2) => write!(f, "Gt {} {} {} ", r3, r1, r2),
+            Lt(r3, r1, r2) => write!(f, "Lt {} {} {}", r3, r1, r2),
+            Le(r3, r1, r2) => write!(f, "Le {} {} {}", r3, r1, r2),
+            Ge(r3, r1, r2) => write!(f, "Ge {} {} {}", r3, r1, r2),
+            Eq(r3, r1, r2) => write!(f, "Eq {} {} {}", r3, r1, r2),
+            Ret0 => write!(f, "Ret0"),
+            Ret(r1) => write!(f, "Ret {}", r1),
+            Goto(label_id) => write!(f, "Goto {}", label_id),
+            GotoF(r1, label_id) => write!(f, "GotoF {} {}", r1, label_id),
+            Jump(ip) => write!(f, "Jump {}", ip),
+            JumpF(r1, ip) => write!(f, "JumpF {} {}", r1, ip),
+            LoadConst(r1, object_id) => write!(f, "LoadConst {} {}", r1, object_id),
+            LoadGlobal(r1, global) => write!(f, "LoadGlobal {} {}", r1, global),
+            LoadInt(r1, int) => write!(f, "LoadInt {} {}", r1, int),
+            LoadLong(r1, long) => write!(f, "LoadLong {} {}", r1, long),
+            LoadFloat(r1, float) => write!(f, "LoadFloat {} {}", r1, float),
+            LoadDouble(r1, double) => write!(f, "LoadDouble {} {}", r1, double),
+            LoadBool(r1, bool) => write!(f, "LoadBool {} {}", r1, bool),
+            LoadString(r1, str) => write!(f, "LoadString {} \"{}\"", r1, str),
+            StoreGlobal(r1, global) => write!(f, "StoreGlobal {} {}", r1, global),
+            StoreAt(r1, r2, r3) => write!(f, "StoreAt {} {} {}", r1, r2, r3),
+            Store(r1, r2, r3) => write!(f, "Store {} {} {}", r1, r2, r3),
+            LoadAt(r1, r2, r3) => write!(f, "LoadAt {} {} {}", r1, r2, r3),
+            BitAnd(r3, r1, r2) => write!(f, "BitAnd {} {} {}", r3, r1, r2),
+            BitOr(r3, r1, r2) => write!(f, "BitOr {} {} {}", r3, r1, r2),
+            BitXor(r3, r1, r2) => write!(f, "BitXor {} {} {}", r3, r1, r2),
+            Or(r3, r1, r2) => write!(f, "Or {} {} {}", r3, r1, r2),
+            And(r3, r1, r2) => write!(f, "And {} {} {}", r3, r1, r2),
+            Shr(r3, r1, r2) => write!(f, "Shr {} {} {}", r3, r1, r2),
+            Shl(r3, r1, r2) => write!(f, "Shl {} {} {}", r3, r1, r2),
+            Label(id) => write!(f, "Label {}", id),
+            Call(r3, r2, r1) => write!(f, "Call {} {} {}", r3, r2, r1),
+            LoadArg(r1) => write!(f, "LoadArg {}", r1),
+            Move(r1, r2) => write!(f, "Move {} {}", r1, r2),
+            LoadSuper(r3, r2, r1) => write!(f, "LoadSuper {} {} {}", r3, r2, r1),
         }
     }
 }
 
-impl fmt::Debug for Instruction {
-    fn fmt(&self,f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl fmt::Debug for Instruction
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
+    {
         use self::Instruction::*;
-        
+
         match self {
-            Add(r3,r1,r2) => write!(f,"Add {} {} {}",r3,r1,r2),
-            Sub(r3,r1,r2) => write!(f,"Sub {} {} {}",r3,r1,r2),
-            Div(r3,r1,r2) => write!(f,"Div {} {} {}",r3,r1,r2),
-            Mul(r3,r1,r2) => write!(f,"Mul {} {} {}",r3,r1,r2),
-            Rem(r3,r1,r2) => write!(f,"Rem {} {} {}",r3,r1,r2),
-            Gt(r3,r1,r2) => write!(f,"Gt {} {} {} ",r3,r1,r2),
-            Lt(r3,r1,r2) => write!(f,"Lt {} {} {}",r3,r1,r2),
-            Le(r3,r1,r2) => write!(f,"Le {} {} {}",r3,r1,r2),
-            Ge(r3,r1,r2) => write!(f,"Ge {} {} {}",r3,r1,r2),
-            Eq(r3,r1,r2) => write!(f,"Eq {} {} {}",r3,r1,r2),
-            Ret0 => write!(f,"Ret0"),
-            Ret(r1) => write!(f,"Ret {}",r1),
-            Goto(label_id) => write!(f,"Goto {}",label_id),
-            GotoF(r1,label_id) => write!(f,"GotoF {} {}",r1,label_id),
-            Jump(ip) => write!(f,"Jump {}",ip),
-            JumpF(r1,ip) => write!(f,"JumpF {} {}",r1,ip),
-            LoadConst(r1,object_id) => write!(f,"LoadConst {} {}",r1,object_id),
-            LoadGlobal(r1,global) => write!(f, "LoadGlobal {} {}",r1,global),
-            LoadInt(r1,int) => write!(f, "LoadInt {} {}",r1,int),
-            LoadLong(r1,long) => write!(f,"LoadLong {} {}",r1,long),
-            LoadFloat(r1,float) => write!(f,"LoadFloat {} {}",r1,float),
-            LoadDouble(r1,double) => write!(f,"LoadDouble {} {}",r1,double),
-            LoadBool(r1,bool) => write!(f,"LoadBool {} {}",r1,bool),
-            LoadString(r1,str) => write!(f,"LoadString {} \"{}\"",r1,str),
-            StoreGlobal(r1,global) => write!(f,"StoreGlobal {} {}",r1,global),
-            StoreAt(r1,r2,r3) => write!(f,"StoreAt {} {} {}",r1,r2,r3),
-            Store(r1,r2,r3) => write!(f,"Store {} {} {}",r1,r2,r3),
-            LoadAt(r1,r2,r3) => write!(f,"LoadAt {} {} {}",r1,r2,r3),
-            BitAnd(r3,r1,r2) => write!(f,"BitAnd {} {} {}",r3,r1,r2),
-            BitOr(r3,r1,r2) => write!(f,"BitOr {} {} {}",r3,r1,r2),
-            BitXor(r3,r1,r2) => write!(f,"BitXor {} {} {}",r3,r1,r2),
-            Or(r3,r1,r2) => write!(f,"Or {} {} {}",r3,r1,r2),
-            And(r3,r1,r2) => write!(f,"And {} {} {}",r3,r1,r2),
-            Shr(r3,r1,r2) => write!(f,"Shr {} {} {}",r3,r1,r2),
-            Shl(r3,r1,r2) => write!(f,"Shl {} {} {}",r3,r1,r2),
-            Label(id) => write!(f,"Label {}",id),
-            Call(r3,r2,r1) => write!(f,"Call {} {} {}",r3,r2,r1),
-            LoadArg(r1) => write!(f,"LoadArg {}",r1),
-            Move(r1,r2) => write!(f,"Move {} {}",r1,r2),
-            LoadSuper(r3,r2,r1) => write!(f,"LoadSuper {} {} {}",r3,r2,r1),
+            Not(r1, r2) => write!(f, "Not {} {}", r1, r2),
+            Add(r3, r1, r2) => write!(f, "Add {} {} {}", r3, r1, r2),
+            Sub(r3, r1, r2) => write!(f, "Sub {} {} {}", r3, r1, r2),
+            Div(r3, r1, r2) => write!(f, "Div {} {} {}", r3, r1, r2),
+            Mul(r3, r1, r2) => write!(f, "Mul {} {} {}", r3, r1, r2),
+            Rem(r3, r1, r2) => write!(f, "Rem {} {} {}", r3, r1, r2),
+            Gt(r3, r1, r2) => write!(f, "Gt {} {} {} ", r3, r1, r2),
+            Lt(r3, r1, r2) => write!(f, "Lt {} {} {}", r3, r1, r2),
+            Le(r3, r1, r2) => write!(f, "Le {} {} {}", r3, r1, r2),
+            Ge(r3, r1, r2) => write!(f, "Ge {} {} {}", r3, r1, r2),
+            Eq(r3, r1, r2) => write!(f, "Eq {} {} {}", r3, r1, r2),
+            Ret0 => write!(f, "Ret0"),
+            Ret(r1) => write!(f, "Ret {}", r1),
+            Goto(label_id) => write!(f, "Goto {}", label_id),
+            GotoF(r1, label_id) => write!(f, "GotoF {} {}", r1, label_id),
+            Jump(ip) => write!(f, "Jump {}", ip),
+            JumpF(r1, ip) => write!(f, "JumpF {} {}", r1, ip),
+            LoadConst(r1, object_id) => write!(f, "LoadConst {} {}", r1, object_id),
+            LoadGlobal(r1, global) => write!(f, "LoadGlobal {} {}", r1, global),
+            LoadInt(r1, int) => write!(f, "LoadInt {} {}", r1, int),
+            LoadLong(r1, long) => write!(f, "LoadLong {} {}", r1, long),
+            LoadFloat(r1, float) => write!(f, "LoadFloat {} {}", r1, float),
+            LoadDouble(r1, double) => write!(f, "LoadDouble {} {}", r1, double),
+            LoadBool(r1, bool) => write!(f, "LoadBool {} {}", r1, bool),
+            LoadString(r1, str) => write!(f, "LoadString {} \"{}\"", r1, str),
+            StoreGlobal(r1, global) => write!(f, "StoreGlobal {} {}", r1, global),
+            StoreAt(r1, r2, r3) => write!(f, "StoreAt {} {} {}", r1, r2, r3),
+            Store(r1, r2, r3) => write!(f, "Store {} {} {}", r1, r2, r3),
+            LoadAt(r1, r2, r3) => write!(f, "LoadAt {} {} {}", r1, r2, r3),
+            BitAnd(r3, r1, r2) => write!(f, "BitAnd {} {} {}", r3, r1, r2),
+            BitOr(r3, r1, r2) => write!(f, "BitOr {} {} {}", r3, r1, r2),
+            BitXor(r3, r1, r2) => write!(f, "BitXor {} {} {}", r3, r1, r2),
+            Or(r3, r1, r2) => write!(f, "Or {} {} {}", r3, r1, r2),
+            And(r3, r1, r2) => write!(f, "And {} {} {}", r3, r1, r2),
+            Shr(r3, r1, r2) => write!(f, "Shr {} {} {}", r3, r1, r2),
+            Shl(r3, r1, r2) => write!(f, "Shl {} {} {}", r3, r1, r2),
+            Label(id) => write!(f, "Label {}", id),
+            Call(r3, r2, r1) => write!(f, "Call {} {} {}", r3, r2, r1),
+            LoadArg(r1) => write!(f, "LoadArg {}", r1),
+            Move(r1, r2) => write!(f, "Move {} {}", r1, r2),
+            LoadSuper(r3, r2, r1) => write!(f, "LoadSuper {} {} {}", r3, r2, r1),
         }
     }
 }
-
 
 ///Trait used for print Vec\<Instruction\>
 
@@ -231,7 +235,7 @@ impl DebugCode for Vec<Instruction>
     {
         let mut str = String::new();
         for i in 0..self.len() {
-            str.push_str(&format!("{:04} {}", i, format!("{}",self[i]).white()));
+            str.push_str(&format!("{:04} {}", i, format!("{}", self[i]).white()));
             str.push('\n');
         }
         str

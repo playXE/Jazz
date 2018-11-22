@@ -97,9 +97,18 @@ pub struct FnDef
     pub body: Box<Stmt>,
 }
 
+#[derive(Debug, Clone)]
+pub struct ClassDef
+{
+    pub name: Box<Expr>,
+    pub vars: Vec<(String, Option<Expr>)>,
+    pub methods: Vec<FnDef>,
+}
+
 #[derive(Clone, Debug)]
 pub enum Global
 {
+    ClassDefinition(ClassDef),
     FnDefenition(FnDef),
     Variable(Stmt),
 }
@@ -1379,6 +1388,97 @@ fn parse_stmt<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Stmt, Parse
     }
 }
 
+fn parse_class_block<'a>(
+    input: &mut Peekable<TokenIterator<'a>>,
+) -> Result<(Stmt, Vec<FnDef>), ParseError>
+{
+    match input.peek() {
+        Some(&Token::LCurly) => (),
+        _ => return Err(ParseError::MissingLCurly),
+    }
+
+    input.next();
+
+    let mut stmts = Vec::new();
+    let mut fns = Vec::new();
+    let skip_body = match input.peek() {
+        Some(&Token::RCurly) => true,
+        _ => false,
+    };
+
+    if !skip_body {
+        while let Some(_) = input.peek() {
+            if let Some(&Token::Var) = input.peek() {
+                stmts.push(parse_var(input)?);
+                if let Some(&Token::Semicolon) = input.peek() {
+                    input.next();
+                }
+            }
+
+            if let Some(&Token::Fn) = input.peek() {
+                fns.push(parse_fn(input)?);
+                if let Some(&Token::Semicolon) = input.peek() {
+                    input.next();
+                }
+            }
+            if let Some(&Token::Semicolon) = input.peek() {
+                input.next();
+            }
+
+            if let Some(&Token::RCurly) = input.peek() {
+                break;
+            }
+        }
+    }
+
+    match input.peek() {
+        Some(&Token::RCurly) => {
+            input.next();
+            Ok((Stmt::Block(stmts), fns))
+        }
+        _ => Err(ParseError::MissingRCurly),
+    }
+}
+
+fn parse_class<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<ClassDef, ParseError>
+{
+    input.next();
+
+    let mut def = ClassDef {
+        name: Box::new(Expr::Identifier(String::new())),
+        vars: Vec::new(),
+        methods: Vec::new(),
+    };
+
+    let name = match input.next() {
+        Some(Token::Identifier(ref s)) => Box::new(Expr::Identifier(s.clone())),
+        _ => return Err(ParseError::ClassMissingName),
+    };
+
+    def.name = name;
+
+    let (block, fndefs) = parse_class_block(input)?;
+    def.methods = fndefs;
+
+    if let Stmt::Block(stmts) = block {
+        for stmt in stmts.iter() {
+            match stmt {
+                Stmt::Var(ref name, ref expr) => {
+                    if expr.is_some() {
+                        let expr = expr.clone().unwrap();
+                        def.vars.push((name.clone(), Some(*expr)));
+                    } else {
+                        def.vars.push((name.clone(), None));
+                    }
+                }
+                _ => unimplemented!(),
+            }
+        }
+    }
+
+    Ok(def)
+}
+
 fn parse_fn<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<FnDef, ParseError>
 {
     input.next();
@@ -1432,6 +1532,7 @@ fn parse_top_level<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Vec<Gl
     let mut globals = Vec::new();
     while let Some(_) = input.peek() {
         match input.peek() {
+            Some(&Token::Class) => globals.push(Global::ClassDefinition(parse_class(input)?)),
             Some(&Token::Fn) => globals.push(Global::FnDefenition(parse_fn(input)?)),
             Some(&Token::NewLine) => {}
             Some(&Token::Var) => globals.push(Global::Variable(parse_var(input)?)),

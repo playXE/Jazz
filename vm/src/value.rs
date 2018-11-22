@@ -45,7 +45,8 @@ impl ObjectAddon for Value
         }
     }
 
-    fn to_float(&self,m: &mut Machine) -> f32 {
+    fn to_float(&self, m: &mut Machine) -> f32
+    {
         match self {
             Value::Double(d) => *d as f32,
             Value::Float(f) => *f,
@@ -62,11 +63,12 @@ impl ObjectAddon for Value
             Value::Object(id) => {
                 let obj = m.pool.get(*id);
                 obj.to_float(m)
-            }            
+            }
         }
     }
 
-    fn to_int(&self,m: &mut Machine) -> i32 {
+    fn to_int(&self, m: &mut Machine) -> i32
+    {
         match self {
             Value::Double(d) => *d as i32,
             Value::Float(f) => *f as i32,
@@ -83,11 +85,12 @@ impl ObjectAddon for Value
             Value::Object(id) => {
                 let obj = m.pool.get(*id);
                 obj.to_int(m)
-            }            
+            }
         }
     }
 
-    fn to_long(&self,m: &mut Machine) -> i64 {
+    fn to_long(&self, m: &mut Machine) -> i64
+    {
         match self {
             Value::Double(d) => *d as i64,
             Value::Float(f) => *f as i64,
@@ -104,11 +107,12 @@ impl ObjectAddon for Value
             Value::Object(id) => {
                 let obj = m.pool.get(*id);
                 obj.to_long(m)
-            }            
+            }
         }
     }
 
-    fn as_bytes(&self,m: &mut Machine) -> Vec<u8> {
+    fn as_bytes(&self, m: &mut Machine) -> Vec<u8>
+    {
         let string: String = match self {
             Value::Double(d) => d.to_string(),
             Value::Float(f) => f.to_string(),
@@ -125,12 +129,13 @@ impl ObjectAddon for Value
             Value::Object(id) => {
                 let obj = m.pool.get(*id);
                 obj.to_String(m)
-            }            
+            }
         };
         string.into_bytes()
     }
 
-    fn to_String(&self,m: &mut Machine) -> String {
+    fn to_String(&self, m: &mut Machine) -> String
+    {
         match self {
             Value::Double(d) => d.to_string(),
             Value::Float(f) => f.to_string(),
@@ -147,7 +152,7 @@ impl ObjectAddon for Value
             Value::Object(id) => {
                 let obj = m.pool.get(*id);
                 obj.to_String(m)
-            }            
+            }
         }
     }
 }

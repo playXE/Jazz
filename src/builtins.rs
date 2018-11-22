@@ -255,12 +255,20 @@ pub fn new_array(m: &mut Machine, args: Vec<Value>) -> Value
     object
 }
 
+pub fn concat(m: &mut Machine,args: Vec<Value>) -> Value 
+{
+    let mut buffer = String::new();
+    for i in 1..args.len() {
+        buffer.push_str(&args[i].to_String(m));
+    }
+    let object = Value::Object(m.pool.allocate(Box::new(buffer)));
+    object
+}
+
 pub fn print(m: &mut Machine, args: Vec<Value>) -> Value
 {
-    let args = args.clone();
-
     for i in 1..args.len() {
-        let str = args[args.len() - i].to_String(m);
+        let str = args[i].to_String(m);
 
         print!("{}", str);
     }

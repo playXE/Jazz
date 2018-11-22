@@ -1,0 +1,25 @@
+class Point {
+
+    // x and y will be null
+    var x;
+    var y; 
+
+    func init(a,b) {
+        this.x = a;
+        this.y = b;
+        return this;
+    } 
+
+    func display() {
+        print(this.toString());
+    }
+
+    func toString() {
+        return concat("(",this.x,";",this.y,")");
+    }
+}
+
+func main() {
+    var point = Point(2.5,5); // until initializing `Point` just a function
+    point.display();
+}

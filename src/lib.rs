@@ -2,9 +2,10 @@
 #![warn(rust_2018_idioms)]
 
 pub mod builtins;
+pub mod class;
 pub mod ircode;
 pub mod parser;
-use self::builtins::*;
+use self::{builtins::*, class::Class};
 
 use float_duration::TimePoint;
 use std::time::Instant;
@@ -12,7 +13,7 @@ use std::time::Instant;
 use std::collections::HashMap;
 
 use self::{
-    ircode::FunctionBuilder, parser::{Expr, Global, Op, Stmt}
+    ircode::FunctionBuilder, parser::{Expr, FnDef, Global, Op, Stmt}
 };
 use jazz_vm::{
     function::Function, machine::Machine, object::ObjectAddon, opcodes::{DebugCode, Instruction}, value::Value
@@ -67,12 +68,29 @@ impl<'a> Compiler<'a>
             .allocate(Box::new(Function::from_native(Box::new(new_array))));
         self.globals.insert("__new_array__".to_string(), self.gp);
         self.machine.globals.insert(self.gp, Value::Object(id));
+        self.gp += 1;
+        let id = self
+            .machine
+            .pool
+            .allocate(Box::new(Function::from_native(Box::new(concat))));
+        self.globals.insert("concat".to_owned(),self.gp);
+        self.machine.globals.insert(self.gp,Value::Object(id));
     }
 
     pub fn compile(&mut self, globals: Vec<Global>) -> Value
     {
         for global in globals.iter() {
             self.gp += 1;
+
+            if let Global::ClassDefinition(ref class) = &global {
+                let name = if let Expr::Identifier(ref n) = &*class.name {
+                    n.to_string()
+                } else {
+                    "<unknown>".to_string()
+                };
+                self.machine.globals.insert(self.gp, Value::Int(255));
+                self.globals.insert(name, self.gp);
+            };
 
             if let Global::FnDefenition(ref fun) = &global {
                 let name = if let Expr::Identifier(ref n) = &*fun.name {
@@ -83,6 +101,73 @@ impl<'a> Compiler<'a>
                 self.machine.globals.insert(self.gp, Value::Int(0));
 
                 self.globals.insert(name.clone(), self.gp);
+            }
+
+            if let Global::ClassDefinition(ref classdef) = global {
+                let mut class = Class::new();
+
+                let name = if let Expr::Identifier(ref n) = &*classdef.name.clone() {
+                    n.to_string()
+                } else {
+                    "<undefined>".to_string()
+                };
+
+                class.name = name.clone();
+
+                for fun in classdef.methods.iter() {
+                    let fun: FnDef = fun.clone();
+                    let name = if let Expr::Identifier(ref n) = &*fun.name.clone() {
+                        n.to_string()
+                    } else {
+                        "<undefined>".to_string()
+                    };
+                    let builder = FunctionBuilder::new(fun.params.len());
+                    self.builder = builder;
+                    for param in &fun.params {
+                        let reg = self.builder.register_first_temp_available();
+                        self.builder.new_local(param.to_string(), reg);
+                    }
+                    self.translate_stmt(*fun.body);
+                    let code = self.builder.get_insts();
+                    let func = Function::from_instructions(code, fun.params.len());
+                    let func = self.machine.pool.allocate(Box::new(func));
+                    unsafe { (&mut *class.fields.get()).insert(name, Value::Object(func)) };
+                }
+                for (name, expr) in classdef.vars.iter() {
+                    let name = name.to_string();
+                    if expr.is_some() {
+                        match &expr.clone().unwrap() {
+                            Expr::IntConst(int) => {
+                                unsafe {
+                                    (&mut *class.fields.get()).insert(name, Value::Int(*int as i32))
+                                };
+                            }
+                            Expr::FloatConst(float) => {
+                                unsafe {
+                                    (&mut *class.fields.get())
+                                        .insert(name, Value::Float(*float as f32))
+                                };
+                            }
+                            Expr::StringConst(str) => {
+                                let obj = Value::Object(
+                                    self.machine.pool.allocate(Box::new(str.to_string())),
+                                );
+                                unsafe { (&mut *class.fields.get()).insert(name, obj) };
+                            }
+                            _ => unsafe {
+                                (&mut *class.fields.get()).insert(name, Value::Null);
+                            },
+                        }
+                    } else {
+                        unsafe {
+                            (&mut *class.fields.get()).insert(name, Value::Null);
+                        };
+                    }
+                }
+
+                let cls = self.machine.pool.allocate(Box::new(class));
+                self.machine.globals.insert(self.gp, Value::Object(cls));
+                self.globals.insert(name, self.gp);
             }
 
             if let Global::FnDefenition(ref fun) = global {
@@ -119,6 +204,7 @@ impl<'a> Compiler<'a>
         let main = self.machine.globals.get(&main).expect("main not found");
         let start = Instant::now();
         let ret = self.machine.invoke(*main, vec![]);
+        self.machine.stack.pop();
         let end = Instant::now();
         println!(
             "RESULT: {} (in {})",
@@ -216,6 +302,9 @@ impl<'a> Compiler<'a>
                     self.translate_expr(*expr.unwrap().clone());
                     let r = self.builder.register_pop();
                     self.builder.new_local(name, r);
+                } else {
+                    let r = self.builder.register_first_temp_available();
+                    self.builder.new_local(name, r);
                 }
             }
             Stmt::Return => {
@@ -249,10 +338,14 @@ impl<'a> Compiler<'a>
                 } else {
                     self.builder.int_const(int as i32);
                 }
-                
             }
             Expr::FloatConst(float) => {
                 self.builder.float_const(float as f32);
+            }
+
+            Expr::This => {
+                let r = self.builder.register_push_temp();
+                self.builder.push_op(Instruction::Move(r, 0));
             }
 
             Expr::FnCall(ref fname, ref args) => {
@@ -324,8 +417,9 @@ impl<'a> Compiler<'a>
             Expr::Assignment(e1, e2) => {
                 let e1 = *e1;
                 let e2 = *e2;
-                self.translate_expr(e2);
+
                 if let Expr::Identifier(ref name) = e1 {
+                    self.translate_expr(e2.clone());
                     if self.globals.contains_key(name) {
                         let id = self.globals.get(name).unwrap();
                         let r = self.builder.register_pop();
@@ -335,6 +429,22 @@ impl<'a> Compiler<'a>
                         let r2 = self.builder.register_pop();
                         self.builder.push_op(Instruction::Move(r1, r2));
                     }
+                }
+                if let Expr::Op(Op::Access, this, fname) = e1 {
+                    let r2 = self.builder.register_push_temp();
+
+                    if let Expr::Identifier(n) = *fname {
+                        self.builder.push_op(Instruction::LoadString(r2, n));
+                    } else {
+                        panic!("");
+                    };
+
+                    self.translate_expr(e2.clone());
+                    let value = self.builder.register_pop();
+                    self.builder.register_push_temp();
+                    self.translate_expr(*this);
+                    let this = self.builder.register_pop();
+                    self.builder.push_op(Instruction::StoreAt(value, this, r2));
                 }
             }
             Expr::False => {
@@ -363,7 +473,10 @@ impl<'a> Compiler<'a>
                 let dest = self.builder.register_push_temp();
                 self.builder.push_op(Instruction::LoadAt(dest, target, reg));
             }
-            _ => unimplemented!(),
+            Expr::Unit => {
+                let _r = self.builder.register_push_temp();
+            }
+            v => panic!("Unimplemented {:?}", v),
         }
     }
 
@@ -381,6 +494,7 @@ impl<'a> Compiler<'a>
                 }
                 (this, Expr::FnCall(fname, args)) => {
                     let r2 = self.builder.register_push_temp();
+
                     self.translate_expr(this);
                     let r1 = self.builder.register_pop();
                     let r3 = self.builder.register_push_temp();
@@ -390,7 +504,7 @@ impl<'a> Compiler<'a>
 
                         self.builder.push_op(Instruction::LoadArg(r));
                     }
-
+                    //self.builder.push_op(Instruction::LoadArg(r1));
                     self.builder.push_op(Instruction::LoadArg(r1));
 
                     self.builder.push_op(Instruction::LoadString(r2, fname));
@@ -398,8 +512,6 @@ impl<'a> Compiler<'a>
                     self.builder.push_op(Instruction::LoadAt(r3, r1, r2));
                     let mut args = args.clone();
                     args.reverse();
-
-                    self.builder.push_op(Instruction::LoadArg(r3));
                     let dest = self.builder.register_push_temp();
 
                     self.builder

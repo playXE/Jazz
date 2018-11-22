@@ -34,3 +34,25 @@ func main() {
     return 0;
 }
 ```
+
+```swift
+class Vector2 {
+    var x;
+    var y;
+    func init(a,b) {
+        this.x = a;
+        this.y = b;
+        return this;
+    }
+
+    func toString() {
+        return concat("(",this.x,";",this.y,")");
+    }
+}
+
+func main() {
+    var vector = Vector2(2,-2);
+    print(vector.toString());
+}
+
+```
