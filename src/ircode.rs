@@ -176,6 +176,12 @@ impl FunctionBuilder
     {
         self.register_pop_context_protect(false)
     }
+
+    pub fn register_clear(&mut self,nreg: usize) {
+        if nreg >= self.nlocals {
+            self.state[nreg] = false;
+        }
+    }
     pub fn register_is_temp(&self, nreg: usize) -> bool
     {
         return nreg >= self.nlocals;

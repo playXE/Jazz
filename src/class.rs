@@ -19,7 +19,6 @@ pub struct Class
 {
     pub name: String,
     pub fields: UnsafeCell<HashMap<String, Value>>,
-    pub is_inited: RefCell<bool>,
 }
 
 impl Clone for Class
@@ -30,7 +29,6 @@ impl Clone for Class
         Class {
             name: self.name.clone(),
             fields: UnsafeCell::new(fields),
-            is_inited: self.is_inited.clone(),
         }
     }
 }
@@ -42,14 +40,9 @@ impl Class
         Class {
             name: String::from("<uninitialized>"),
             fields: UnsafeCell::new(HashMap::new()),
-            is_inited: RefCell::new(false),
         }
     }
 
-    fn set_inited(&self)
-    {
-        *self.is_inited.borrow_mut() = true;
-    }
 }
 
 impl ObjectAddon for Class
@@ -88,21 +81,20 @@ impl Object for Class
 
     fn call(&self, m: &mut Machine, args: Vec<Value>) -> Value
     {
-        let ret = if self.is_inited.borrow().clone() {
-            let fields = unsafe { &mut *self.fields.get() };
-            let field = fields
-                .get("__call__")
-                .expect("Class doesn't have __call__ method");
-            let v = m.invoke(*field, args);
-            m.stack.pop();
-            v
+        let class = if let Value::Object(id) = args[0] {
+            let obj = m.pool.get(id);
+
+            obj.as_any().downcast_ref::<Class>().unwrap()
         } else {
-            let fields = unsafe { &mut *self.fields.get() };
+            panic!("Expected Value::Object");
+        };
+
+        let ret = {
+            let fields = unsafe { &mut *class.fields.get() };
             let field = fields.get("init").expect("Couldn't find initializer");
             let mut args = args.clone();
-            args[0] = self.o_clone(m);
+            args[0] = class.o_clone(m);
             let v = m.invoke(*field, args);
-            self.set_inited();
             m.stack.pop();
             v
         };
@@ -118,11 +110,13 @@ impl Object for Class
 
     fn load_at(&self, m: &mut Machine, args: Vec<Value>, rindex: usize)
     {
+        
         let _this = args[0];
         if let Value::Object(id) = args[1] {
             let str = m.pool.get(id).to_String(m);
             let fields = unsafe { &*self.fields.get() };
-            let field = fields.get(&str).expect("No such field");
+            let field = fields.get(&str).expect(&format!("No such field {}",str));
+        
             m.set(rindex, *field);
         }
         if let Value::Int(_) = args[1] {

@@ -347,7 +347,7 @@ impl Machine
                         (Value::Float(f), v) => Value::Bool(f <= v.to_float(self)),
                         (v, Value::Null) => v,
                         (Value::Null, v) => v,
-                        _ => unimplemented!(),
+                        v => panic!("Unimplemented {:?}",v),
                     };
 
                     self.set(*dest, result);
@@ -560,8 +560,8 @@ impl Machine
                         let this = self.get(*r2);
                         obj.load_at(self, vec![this, v3], *r1);
                     } else {
-                        println!("Found: {:?}", v2);
-                        panic!("Expected Object value");
+                        println!("Found: R({}) = {:?}", r2,v2);
+                        panic!("Expected Object value\n IP = {}\nOpcodes: {:?}",self.last_frame().ip,self.last_frame().code);
                     }
                 }
 

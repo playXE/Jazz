@@ -144,6 +144,7 @@ pub enum Expr
     Dot(Box<Expr>, Box<Expr>),
     Index(String, Box<Expr>),
     Array(Vec<Expr>),
+    New(String,Vec<Expr>),
     True,
     This,
     False,
@@ -182,6 +183,7 @@ pub enum Token
     RCurly,
     LParen,
     RParen,
+    New,
     LSquare,
     RSquare,
     Plus,
@@ -598,6 +600,7 @@ impl<'a> TokenIterator<'a>
                         "loop" => return Some(Token::Loop),
                         "break" => return Some(Token::Break),
                         "return" => return Some(Token::Return),
+                        "new" => return Some(Token::New),
                         "func" => return Some(Token::Fn),
                         "enum" => return Some(Token::Enum),
                         "this" => return Some(Token::This),
@@ -878,6 +881,45 @@ fn parse_paren_expr<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr,
     }
 }
 
+fn parse_new_expr<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr,ParseError> {
+    let mut args = Vec::new();
+
+    let name = match input.next() {
+        Some(Token::Identifier(ref s)) => s.clone(),
+        v => panic!("{:?}",v),
+    };
+
+    match input.peek() {
+        Some(&Token::LParen) => {
+            input.next();
+        }
+        _ => return Err(ParseError::MissingLParen),
+    }
+
+    if let Some(&Token::RParen) = input.peek() {
+        input.next();
+        return Ok(Expr::New(name,args));
+    }
+
+    loop {
+        if let Ok(arg) = parse_expr(input) {
+            args.push(arg);
+        } else {
+            return Err(ParseError::MalformedCallExpr);
+        }
+
+        match input.peek() {
+            Some(&Token::RParen) => {
+                input.next();
+                return Ok(Expr::New(name, args));
+            }
+            Some(&Token::Comma) => (),
+            _ => return Err(ParseError::MalformedCallExpr),
+        }
+        input.next();
+    }
+}
+
 fn parse_call_expr<'a>(
     id: String,
     input: &mut Peekable<TokenIterator<'a>>,
@@ -986,6 +1028,7 @@ fn parse_primary<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr, Pa
             Token::StringConst(ref s) => Ok(Expr::StringConst(s.clone())),
             Token::CharConst(ref c) => Ok(Expr::CharConst(*c)),
             Token::Identifier(ref s) => parse_ident_expr(s.clone(), input),
+            Token::New => parse_new_expr(input),
             Token::LParen => parse_paren_expr(input),
             Token::LSquare => parse_array_expr(input),
             Token::True => Ok(Expr::True),
@@ -1494,6 +1537,8 @@ fn parse_class<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<ClassDef, 
 
     Ok(def)
 }
+
+
 
 fn parse_fn<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<FnDef, ParseError>
 {

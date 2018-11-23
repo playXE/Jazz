@@ -87,7 +87,6 @@ impl<'a> Compiler<'a>
     {
         for global in globals.iter() {
             self.gp += 1;
-
             if let Global::ClassDefinition(ref class) = &global {
                 let name = if let Expr::Identifier(ref n) = &*class.name {
                     n.to_string()
@@ -108,6 +107,15 @@ impl<'a> Compiler<'a>
 
                 self.globals.insert(name.clone(), self.gp);
             }
+
+            
+        }
+
+        self.gp = 5;
+
+        for global in globals.iter() {
+            self.gp += 1;
+
 
             if let Global::ClassDefinition(ref classdef) = global {
                 let mut class = Class::new();
@@ -338,15 +346,10 @@ impl<'a> Compiler<'a>
     {
         match expr {
             Expr::IntConst(int) => {
-                use std::i32;
-                if int >= i32::MAX as i64 {
-                    self.builder.long_const(int);
-                } else {
-                    self.builder.int_const(int as i32);
-                }
+                self.builder.long_const(int);
             }
             Expr::FloatConst(float) => {
-                self.builder.float_const(float as f32);
+                self.builder.double_const(float);
             }
 
             Expr::This => {
@@ -380,6 +383,66 @@ impl<'a> Compiler<'a>
                 self.builder.push_op(Instruction::LoadArg(fptr));
                 self.builder
                     .push_op(Instruction::Call(dest, fptr, args.len()));
+            }
+
+            Expr::New(name,args) => {
+                let mut args = args.clone();
+                args.reverse();
+                for arg in args.iter() {
+                    self.translate_expr(arg.clone());
+                    let r = self.builder.register_pop();
+                    self.builder.push_op(Instruction::LoadArg(r));
+                }
+
+                let dest = self.builder.register_push_temp();
+                let fptr = if !self.globals.contains_key(&name) {
+                    let r = self.builder.get_local(&name);
+                    r
+                } else {
+                    let idx = self
+                        .globals
+                        .get(&name)
+                        .expect(&format!("Function not found `{}`", name));
+                    let register = self.builder.register_first_temp_available();
+                    self.builder
+                        .push_op(Instruction::LoadGlobal(register, *idx));
+                    register
+                };
+                self.builder.push_op(Instruction::LoadArg(fptr));
+                self.builder
+                    .push_op(Instruction::Call(dest, fptr, args.len()));
+                /*let mut args = args.clone();
+                args.reverse();
+                for arg in args.iter() {
+                    self.translate_expr(arg.clone());
+                    let r = self.builder.register_pop();
+                    self.builder.push_op(Instruction::LoadArg(r));
+                }
+
+                let dest = self.builder.register_push_temp();
+                let optr = if !self.globals.contains_key(&name) {
+                    let r = self.builder.get_local(&name);
+                    r
+                } else {
+                    let idx = self
+                        .globals
+                        .get(&name)
+                        .expect(&format!("Object not found `{}`", name));
+                    let register = self.builder.register_first_temp_available();
+                    self.builder
+                        .push_op(Instruction::LoadGlobal(register, *idx));
+                    register
+                }; 
+
+                self.builder.push_op(Instruction::LoadArg(optr));
+
+                let r = self.builder.register_push_temp();
+                self.builder.push_op(Instruction::LoadString(r+1,"init".to_owned()));
+                self.builder.push_op(Instruction::LoadAt(dest,optr,r+1));
+                let dest2 = self.builder.register_push_temp();
+                self.builder.push_op(Instruction::Call(dest2,dest,args.len()));*/
+
+
             }
 
             Expr::Array(arr_expr) => {
@@ -487,6 +550,8 @@ impl<'a> Compiler<'a>
         }
     }
 
+   
+
     pub fn translate_operation(&mut self, op: Op, e1: Box<Expr>, e2: Box<Expr>)
     {
         if op == Op::Access {
@@ -513,7 +578,6 @@ impl<'a> Compiler<'a>
 
                         self.builder.push_op(Instruction::LoadArg(r));
                     }
-                    //self.builder.push_op(Instruction::LoadArg(r1));
                     self.builder.push_op(Instruction::LoadArg(r1));
 
                     self.builder.push_op(Instruction::LoadString(r2, fname));
@@ -521,9 +585,13 @@ impl<'a> Compiler<'a>
                     self.builder.push_op(Instruction::LoadAt(r3, r1, r2));
                     //self.builder.register_pop();
                     let dest = self.builder.register_push_temp();
-
+                    
                     self.builder
                         .push_op(Instruction::Call(dest, r3, args.len()));
+                    self.builder.register_clear(r1);
+                    self.builder.register_clear(r2);
+                    self.builder.register_clear(r3);
+                    //self.builder.register_clear(dest);
                 }
                 v => panic!("Unimplemented {:?}", v),
             }
@@ -556,6 +624,8 @@ impl<'a> Compiler<'a>
 
                 _ => unimplemented!(),
             }
+            self.builder.register_clear(r2);
+            self.builder.register_clear(r1);
         }
     }
 }

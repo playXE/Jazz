@@ -34,6 +34,6 @@ fn main()
     let parsed = parse(&mut lex.peekable()).unwrap();
     let mut machine = Machine::new();
     let mut cmpl = Compiler::new(&mut machine, 0, ops.debug);
-    //println!("{:?}",parsed);
     cmpl.compile(parsed);
+    
 }
