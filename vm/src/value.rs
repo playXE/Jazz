@@ -23,19 +23,30 @@ use crate::{machine::Machine, object::ObjectAddon};
 
 impl ObjectAddon for Value
 {
+    fn o_clone(&self, m: &mut Machine) -> Value
+    {
+        match self {
+            Value::Object(id) => {
+                let obj = m.pool.get(*id);
+                obj.o_clone(m)
+            }
+            v => v.clone(),
+        }
+    }
+
     fn to_double(&self, m: &mut Machine) -> f64
     {
         match self {
             Value::Double(d) => *d,
-            Value::Float(f) => *f as f64,
+            Value::Float(f) => f64::from(*f),
             Value::Bool(b) => {
                 if *b {
-                    return 1.0;
+                    1.0
                 } else {
-                    return 0.0;
+                    0.0
                 }
             }
-            Value::Int(i) => *i as f64,
+            Value::Int(i) => f64::from(*i),
             Value::Long(i) => *i as f64,
             Value::Null => 0.0,
             Value::Object(id) => {
@@ -52,9 +63,9 @@ impl ObjectAddon for Value
             Value::Float(f) => *f,
             Value::Bool(b) => {
                 if *b {
-                    return 1.0;
+                    1.0
                 } else {
-                    return 0.0;
+                    0.0
                 }
             }
             Value::Int(i) => *i as f32,
@@ -74,9 +85,9 @@ impl ObjectAddon for Value
             Value::Float(f) => *f as i32,
             Value::Bool(b) => {
                 if *b {
-                    return 1;
+                    1
                 } else {
-                    return 0;
+                    0
                 }
             }
             Value::Int(i) => *i,
@@ -96,12 +107,12 @@ impl ObjectAddon for Value
             Value::Float(f) => *f as i64,
             Value::Bool(b) => {
                 if *b {
-                    return 1;
+                    1
                 } else {
-                    return 0;
+                    0
                 }
             }
-            Value::Int(i) => *i as i64,
+            Value::Int(i) => i64::from(*i),
             Value::Long(i) => *i,
             Value::Null => 0,
             Value::Object(id) => {
@@ -141,9 +152,9 @@ impl ObjectAddon for Value
             Value::Float(f) => f.to_string(),
             Value::Bool(b) => {
                 if *b {
-                    return "true".to_string();
+                    "true".to_string()
                 } else {
-                    return "false".to_string();
+                    "false".to_string()
                 }
             }
             Value::Int(i) => i.to_string(),
@@ -153,6 +164,43 @@ impl ObjectAddon for Value
                 let obj = m.pool.get(*id);
                 obj.to_String(m)
             }
+        }
+    }
+
+    fn not(&self, _m: &mut Machine) -> bool
+    {
+        match self {
+            Value::Null => true,
+            Value::Int(i) => {
+                if *i == 0 {
+                    true
+                } else {
+                    false
+                }
+            }
+            Value::Long(l) => {
+                if *l == 0 {
+                    true
+                } else {
+                    false
+                }
+            }
+            Value::Double(b) => {
+                if *b == 0.0 {
+                    true
+                } else {
+                    false
+                }
+            }
+            Value::Float(f) => {
+                if *f == 0.0 {
+                    true
+                } else {
+                    false
+                }
+            }
+            Value::Bool(b) => !b,
+            _ => unimplemented!(),
         }
     }
 }

@@ -1082,6 +1082,22 @@ fn parse_binop<'a>(
                 Token::RightShift => Expr::Op(Op::Shr, Box::new(lhs_curr), Box::new(rhs)),
                 Token::Period => Expr::Op(Op::Access, Box::new(lhs_curr), Box::new(rhs)),
                 Token::LessThanEqual => Expr::Op(Op::Le, Box::new(lhs_curr), Box::new(rhs)),
+                Token::PlusAssign => {
+                    let lhs_copy = lhs_curr.clone();
+
+                    Expr::Assignment(
+                        Box::new(lhs_curr),
+                        Box::new(Expr::Op(Op::Add, Box::new(lhs_copy), Box::new(rhs))),
+                    )
+                }
+                Token::MinusAssign => {
+                    let lhs_copy = lhs_curr.clone();
+
+                    Expr::Assignment(
+                        Box::new(lhs_curr),
+                        Box::new(Expr::Op(Op::Sub, Box::new(lhs_copy), Box::new(rhs))),
+                    )
+                }
                 /* Token::PlusAssign => {
                     let lhs_copy = lhs_curr.clone();
                     Expr::Assignment(

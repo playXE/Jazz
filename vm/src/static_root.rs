@@ -1,6 +1,6 @@
 use crate::object::{Object, ObjectAddon};
 use std::{any::Any, cell::RefCell};
-
+#[derive(Default)]
 pub struct StaticRoot
 {
     children: RefCell<Vec<usize>>,

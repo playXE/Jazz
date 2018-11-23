@@ -5,7 +5,8 @@ pub mod builtins;
 pub mod class;
 pub mod ircode;
 pub mod parser;
-use self::{builtins::*, class::Class};
+pub mod std_library;
+use self::{builtins::*, class::Class, std_library::*};
 
 use float_duration::TimePoint;
 use std::time::Instant;
@@ -39,11 +40,11 @@ impl<'a> Compiler<'a>
             gp: 0,
             debug,
         };
-        compiler.register_funs();
+        compiler.register_builtins();
         compiler
     }
 
-    pub fn register_funs(&mut self)
+    pub fn register_builtins(&mut self)
     {
         self.gp += 1;
 
@@ -73,8 +74,13 @@ impl<'a> Compiler<'a>
             .machine
             .pool
             .allocate(Box::new(Function::from_native(Box::new(concat))));
-        self.globals.insert("concat".to_owned(),self.gp);
-        self.machine.globals.insert(self.gp,Value::Object(id));
+        self.globals.insert("concat".to_owned(), self.gp);
+        self.machine.globals.insert(self.gp, Value::Object(id));
+        self.gp += 1;
+        let class = system_class(self.machine);
+        let id = self.machine.pool.allocate(Box::new(class));
+        self.globals.insert("System".to_owned(), self.gp);
+        self.machine.globals.insert(self.gp, Value::Object(id));
     }
 
     pub fn compile(&mut self, globals: Vec<Global>) -> Value
@@ -410,7 +416,8 @@ impl<'a> Compiler<'a>
                 } else {
                     let idx = self.globals.get(name).unwrap();
                     let register = self.builder.register_push_temp();
-                    self.builder.push_op(Instruction::LoadConst(register, *idx));
+                    self.builder
+                        .push_op(Instruction::LoadGlobal(register, *idx));
                 }
             }
 
@@ -498,6 +505,8 @@ impl<'a> Compiler<'a>
                     self.translate_expr(this);
                     let r1 = self.builder.register_pop();
                     let r3 = self.builder.register_push_temp();
+                    let mut args = args.clone();
+                    args.reverse();
                     for arg in args.iter() {
                         self.translate_expr(arg.clone());
                         let r = self.builder.register_pop();
@@ -510,12 +519,11 @@ impl<'a> Compiler<'a>
                     self.builder.push_op(Instruction::LoadString(r2, fname));
 
                     self.builder.push_op(Instruction::LoadAt(r3, r1, r2));
-                    let mut args = args.clone();
-                    args.reverse();
+                    //self.builder.register_pop();
                     let dest = self.builder.register_push_temp();
 
                     self.builder
-                        .push_op(Instruction::Call(dest, r3, args.len() + 1));
+                        .push_op(Instruction::Call(dest, r3, args.len()));
                 }
                 v => panic!("Unimplemented {:?}", v),
             }

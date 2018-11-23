@@ -12,6 +12,7 @@ macro_rules! for_c {
 }
 
 ///Machine that executes code
+#[derive(Default)]
 pub struct Machine
 {
     pub stack: Vec<CallFrame>,
@@ -73,12 +74,9 @@ impl Machine
 
         let obj = self.pool.get(id);
         self.stack.push(CallFrame::new());
-        let ret = {
-            self.last_frame_mut().init_with_args(&args.as_slice());
-            obj.call(self, args)
-        };
 
-        ret
+        self.last_frame_mut().init_with_args(&args.as_slice());
+        obj.call(self, args)
     }
 
     pub fn branch(&mut self, idx: usize)
@@ -100,9 +98,7 @@ impl Machine
         self.last_frame_mut().code = code;
         self.last_frame_mut().ip = 0;
 
-        let value = self.execute_op();
-
-        value
+        self.execute_op()
     }
 
     pub fn execute_op(&mut self) -> Value
@@ -281,6 +277,12 @@ impl Machine
 
                 Instruction::LoadConst(r1, idx) => {
                     self.set(*r1, Value::Object(*idx));
+                }
+
+                Instruction::Not(r1, r2) => {
+                    let v = self.get(*r2);
+                    let result = Value::Bool(v.not(self));
+                    self.set(*r1, result);
                 }
 
                 Instruction::Gt(dest, r1, r2) => {
@@ -468,8 +470,8 @@ impl Machine
 
                 Instruction::Goto(lbl_id) => {
                     if self.labels.contains_key(lbl_id) {
-                        let idx = self.labels.get(lbl_id).unwrap();
-                        self.branch(*idx);
+                        let idx = &self.labels[lbl_id];
+                        self.branch(*idx - 1);
                     } else {
                         panic!("Label with id `{}` doesn't exists", lbl_id);
                     }
@@ -479,8 +481,8 @@ impl Machine
                     Value::Bool(b) => {
                         if !b {
                             if self.labels.contains_key(lbl_id) {
-                                let idx = self.labels.get(lbl_id).unwrap();
-                                self.branch(*idx);
+                                let idx = &self.labels[lbl_id];
+                                self.branch(*idx - 1);
                             } else {
                                 panic!("Label with id `{}`,doesn't exists", lbl_id)
                             }
@@ -488,7 +490,7 @@ impl Machine
                     }
                     Value::Null => {
                         if self.labels.contains_key(lbl_id) {
-                            let idx = self.labels.get(lbl_id).unwrap();
+                            let idx = &self.labels[lbl_id];
                             self.branch(*idx);
                         } else {
                             panic!("Label with id `{}`,doesn't exists", lbl_id)
@@ -534,7 +536,9 @@ impl Machine
                 }
 
                 Instruction::Move(r1, r2) => {
-                    self.last_frame_mut().stack[*r1] = self.last_frame().stack[*r2];
+                    let v = self.get(*r2);
+
+                    self.last_frame_mut().stack[*r1] = v;
                 }
 
                 Instruction::Ret(idx) => {

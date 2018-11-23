@@ -11,7 +11,12 @@ class Point {
     } 
 
     func display() {
-        print(this.toString());
+        System.print(this.toString());
+    }
+
+    func move(x,y) {
+        this.x = this.x + x;
+        this.y = this.y + y;
     }
 
     func toString() {

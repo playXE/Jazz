@@ -30,7 +30,7 @@ pub fn array_pop(m: &mut Machine, args: Vec<Value>) -> Value
 
 pub fn array_push(m: &mut Machine, args: Vec<Value>) -> Value
 {
-    if let Value::Object(id) = &args[1] {
+    if let Value::Object(id) = &args[0] {
         let obj = m.pool.get(*id).as_any();
 
         let array = if let Some(array) = obj.downcast_ref::<Array>() {
@@ -39,7 +39,7 @@ pub fn array_push(m: &mut Machine, args: Vec<Value>) -> Value
             panic!("Not a Array object!");
         };
 
-        let v = args[2];
+        let v = args[1];
         array.push(v);
         return Value::Null;
     } else {
@@ -49,7 +49,7 @@ pub fn array_push(m: &mut Machine, args: Vec<Value>) -> Value
 
 pub fn array_size(m: &mut Machine, args: Vec<Value>) -> Value
 {
-    if let Value::Object(id) = &args[1] {
+    if let Value::Object(id) = &args[0] {
         let obj = m.pool.get(*id).as_any();
 
         let array = if let Some(array) = obj.downcast_ref::<Array>() {
@@ -65,12 +65,12 @@ pub fn array_size(m: &mut Machine, args: Vec<Value>) -> Value
 
 pub fn array_get(m: &mut Machine, args: Vec<Value>) -> Value
 {
-    if let Value::Object(id) = &args[1] {
+    if let Value::Object(id) = &args[0] {
         let obj = m.pool.get(*id).as_any();
-        let idx = match &args[2] {
+        let idx = match &args[1] {
             Value::Int(integer) => *integer as usize,
             Value::Long(long) => *long as usize,
-            _ => panic!("Array::get expects Long org Int value as index"),
+            _ => panic!("Array::get expects Long or Int value as index"),
         };
         let array = if let Some(array) = obj.downcast_ref::<Array>() {
             array
@@ -85,12 +85,12 @@ pub fn array_get(m: &mut Machine, args: Vec<Value>) -> Value
 
 pub fn array_set(m: &mut Machine, args: Vec<Value>) -> Value
 {
-    if let Value::Object(id) = &args[1] {
+    if let Value::Object(id) = &args[0] {
         let obj = m.pool.get(*id).as_any();
-        let idx = match &args[2] {
+        let idx = match &args[1] {
             Value::Int(integer) => *integer as usize,
             Value::Long(long) => *long as usize,
-            _ => panic!("Array::set expects Long org Int value as index"),
+            _ => panic!("Array::set expects Long or Int value as index"),
         };
         let array = if let Some(array) = obj.downcast_ref::<Array>() {
             array
@@ -255,7 +255,7 @@ pub fn new_array(m: &mut Machine, args: Vec<Value>) -> Value
     object
 }
 
-pub fn concat(m: &mut Machine,args: Vec<Value>) -> Value 
+pub fn concat(m: &mut Machine, args: Vec<Value>) -> Value
 {
     let mut buffer = String::new();
     for i in 1..args.len() {

@@ -58,7 +58,7 @@ impl CallStack
     /// Reset last frame
     pub fn pop(&mut self)
     {
-        if self.n_frames <= 0 {
+        if self.n_frames == 0 {
             panic!("Virtual stack underflow");
         }
         self.frames[self.n_frames - 1].reset();

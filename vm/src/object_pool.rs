@@ -2,6 +2,7 @@ use crate::{
     object::Object, object_info::{ObjectHandle, ObjectInfo, TypedObjectHandle}, static_root::StaticRoot
 };
 
+#[derive(Default)]
 /// An object pool that provides the backing object storage for executors.
 pub struct ObjectPool
 {

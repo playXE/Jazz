@@ -2,16 +2,18 @@ use jazz_vm::{
     machine::Machine, object::{Object, ObjectAddon}, object_pool::ObjectPool, value::Value
 };
 
-use std::{any::Any, cell::UnsafeCell, collections::HashMap,cell::RefCell};
+use std::{
+    any::Any, cell::{RefCell, UnsafeCell}, collections::HashMap
+};
 /// Class
-/// 
-/// Every value in Jazz is an object, but not every object is a instance of Class. 
-/// 
+///
+/// Every value in Jazz is an object, but not every object is a instance of Class.
+///
 /// Before initializing Class is just a `Function` object, after calling initializer `init` function returns `this` value
-/// 
+///
 /// For stroing fields used UnsafeCell because RefCell returns BorrowMutError in initializer
-/// 
-/// 
+///
+///
 #[derive(Debug)]
 pub struct Class
 {
@@ -31,8 +33,6 @@ impl Clone for Class
             is_inited: self.is_inited.clone(),
         }
     }
-
-    
 }
 
 impl Class
@@ -46,20 +46,13 @@ impl Class
         }
     }
 
-    fn set_inited(&self) {
+    fn set_inited(&self)
+    {
         *self.is_inited.borrow_mut() = true;
     }
 }
 
 impl ObjectAddon for Class
-{
-    fn to_String(&self, _m: &mut Machine) -> String
-    {
-        let fields = unsafe { &*self.fields.get() };
-        format!("Class {} ({:?})", self.name, fields)
-    }
-}
-impl Object for Class
 {
     fn o_clone(&self, m: &mut Machine) -> Value
     {
@@ -68,7 +61,14 @@ impl Object for Class
         let v = Value::Object(m.pool.allocate(Box::new(c)));
         v
     }
-
+    fn to_String(&self, _m: &mut Machine) -> String
+    {
+        let fields = unsafe { &*self.fields.get() };
+        format!("Class {} ({:?})", self.name, fields)
+    }
+}
+impl Object for Class
+{
     fn as_any(&self) -> &dyn Any
     {
         self as &dyn Any
@@ -99,8 +99,8 @@ impl Object for Class
         } else {
             let fields = unsafe { &mut *self.fields.get() };
             let field = fields.get("init").expect("Couldn't find initializer");
-            let args = args.clone();
-
+            let mut args = args.clone();
+            args[0] = self.o_clone(m);
             let v = m.invoke(*field, args);
             self.set_inited();
             m.stack.pop();

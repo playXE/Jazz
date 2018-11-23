@@ -81,7 +81,7 @@ impl Object for Function
     /// Call object
     fn call(&self, m: &mut Machine, args: Vec<Value>) -> Value
     {
-        let ret = match self {
+        match self {
             Function::Virtual(ref vf) => {
                 //println!("{:?}",args);
                 let func = vf.clone();
@@ -93,8 +93,7 @@ impl Object for Function
             }
 
             Function::Native(nv) => nv.0(m, args),
-        };
-        return ret;
+        }
     }
 }
 
@@ -109,10 +108,7 @@ impl Function
 {
     pub fn from_instructions(code: Vec<Instruction>, args: usize) -> Function
     {
-        Function::Virtual(VirtualFunction {
-            code: code,
-            argc: args,
-        })
+        Function::Virtual(VirtualFunction { code, argc: args })
     }
 
     pub fn from_native(f: Box<dyn Fn(&mut Machine, Vec<Value>) -> Value + Send>) -> Function

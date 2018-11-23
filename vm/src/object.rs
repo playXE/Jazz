@@ -2,11 +2,6 @@ use crate::{machine::Machine, object_pool::ObjectPool, value::Value};
 use std::any::Any;
 pub trait Object: Send + ObjectAddon
 {
-    fn o_clone(&self, _m: &mut Machine) -> Value
-    {
-        panic!("Cannot clone!");
-    }
-
     fn typename(&self) -> String
     {
         String::from("Object")
@@ -41,6 +36,10 @@ pub trait Object: Send + ObjectAddon
 
 pub trait ObjectAddon
 {
+    fn o_clone(&self, _m: &mut Machine) -> Value
+    {
+        panic!("Cannot clone!");
+    }
     fn to_String(&self, _: &mut Machine) -> String
     {
         String::new()

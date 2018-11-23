@@ -56,11 +56,7 @@ impl ObjectInfo
 
     pub fn has_native_refs(&self) -> bool
     {
-        if self.native_ref_info.n_refs.get() == 0 {
-            false
-        } else {
-            true
-        }
+        !(self.native_ref_info.n_refs.get() == 0)
     }
 
     pub fn handle<'a>(&self) -> ObjectHandle<'a>
@@ -141,7 +137,7 @@ where
         };
         Some(TypedObjectHandle {
             _handle: other,
-            value: value,
+            value,
         })
     }
 }

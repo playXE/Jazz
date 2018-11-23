@@ -4,5 +4,5 @@ func basic(a,b) {
 
 
 func main() {
-    print(basic.disassemble());
+    System.print(basic.disassemble());
 }

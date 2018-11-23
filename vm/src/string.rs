@@ -9,24 +9,20 @@ impl ObjectAddon for String
 
     fn to_double(&self, _: &mut Machine) -> f64
     {
-        let f = self.parse::<f64>().unwrap();
-        f
+        self.parse::<f64>().unwrap()
     }
 
     fn to_float(&self, _: &mut Machine) -> f32
     {
-        let f = self.parse::<f32>().unwrap();
-        f
+        self.parse::<f32>().unwrap()
     }
     fn to_int(&self, _: &mut Machine) -> i32
     {
-        let f = self.parse::<i32>().unwrap();
-        f
+        self.parse::<i32>().unwrap()
     }
     fn to_long(&self, _: &mut Machine) -> i64
     {
-        let f = self.parse::<i64>().unwrap();
-        f
+        self.parse::<i64>().unwrap()
     }
 }
 

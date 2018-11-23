@@ -8,7 +8,7 @@ func main()
 {
     var function = add2;
 
-    print(function(4));
+    System.print(function(4));
     return 0;
 }
 
