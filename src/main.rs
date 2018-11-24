@@ -35,5 +35,4 @@ fn main()
     let mut machine = Machine::new();
     let mut cmpl = Compiler::new(&mut machine, 0, ops.debug);
     cmpl.compile(parsed);
-    
 }

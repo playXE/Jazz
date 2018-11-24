@@ -2,9 +2,7 @@ use jazz_vm::{
     machine::Machine, object::{Object, ObjectAddon}, object_pool::ObjectPool, value::Value
 };
 
-use std::{
-    any::Any, cell::{RefCell, UnsafeCell}, collections::HashMap
-};
+use std::{any::Any, cell::UnsafeCell, collections::HashMap};
 /// Class
 ///
 /// Every value in Jazz is an object, but not every object is a instance of Class.
@@ -42,7 +40,6 @@ impl Class
             fields: UnsafeCell::new(HashMap::new()),
         }
     }
-
 }
 
 impl ObjectAddon for Class
@@ -110,13 +107,12 @@ impl Object for Class
 
     fn load_at(&self, m: &mut Machine, args: Vec<Value>, rindex: usize)
     {
-        
         let _this = args[0];
         if let Value::Object(id) = args[1] {
             let str = m.pool.get(id).to_String(m);
             let fields = unsafe { &*self.fields.get() };
-            let field = fields.get(&str).expect(&format!("No such field {}",str));
-        
+            let field = fields.get(&str).expect(&format!("No such field {}", str));
+
             m.set(rindex, *field);
         }
         if let Value::Int(_) = args[1] {

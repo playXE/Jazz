@@ -81,6 +81,10 @@ impl<'a> Compiler<'a>
         let id = self.machine.pool.allocate(Box::new(class));
         self.globals.insert("System".to_owned(), self.gp);
         self.machine.globals.insert(self.gp, Value::Object(id));
+        self.gp += 1;
+        self.globals.insert("__unary_minus__".to_owned(), self.gp);
+        let f = unary_minus(self.machine);
+        self.machine.globals.insert(self.gp, f);
     }
 
     pub fn compile(&mut self, globals: Vec<Global>) -> Value
@@ -107,15 +111,12 @@ impl<'a> Compiler<'a>
 
                 self.globals.insert(name.clone(), self.gp);
             }
-
-            
         }
 
         self.gp = 5;
 
         for global in globals.iter() {
             self.gp += 1;
-
 
             if let Global::ClassDefinition(ref classdef) = global {
                 let mut class = Class::new();
@@ -385,7 +386,7 @@ impl<'a> Compiler<'a>
                     .push_op(Instruction::Call(dest, fptr, args.len()));
             }
 
-            Expr::New(name,args) => {
+            Expr::New(name, args) => {
                 let mut args = args.clone();
                 args.reverse();
                 for arg in args.iter() {
@@ -418,7 +419,7 @@ impl<'a> Compiler<'a>
                     let r = self.builder.register_pop();
                     self.builder.push_op(Instruction::LoadArg(r));
                 }
-
+                
                 let dest = self.builder.register_push_temp();
                 let optr = if !self.globals.contains_key(&name) {
                     let r = self.builder.get_local(&name);
@@ -433,16 +434,14 @@ impl<'a> Compiler<'a>
                         .push_op(Instruction::LoadGlobal(register, *idx));
                     register
                 }; 
-
+                
                 self.builder.push_op(Instruction::LoadArg(optr));
-
+                
                 let r = self.builder.register_push_temp();
                 self.builder.push_op(Instruction::LoadString(r+1,"init".to_owned()));
                 self.builder.push_op(Instruction::LoadAt(dest,optr,r+1));
                 let dest2 = self.builder.register_push_temp();
                 self.builder.push_op(Instruction::Call(dest2,dest,args.len()));*/
-
-
             }
 
             Expr::Array(arr_expr) => {
@@ -550,8 +549,6 @@ impl<'a> Compiler<'a>
         }
     }
 
-   
-
     pub fn translate_operation(&mut self, op: Op, e1: Box<Expr>, e2: Box<Expr>)
     {
         if op == Op::Access {
@@ -585,7 +582,7 @@ impl<'a> Compiler<'a>
                     self.builder.push_op(Instruction::LoadAt(r3, r1, r2));
                     //self.builder.register_pop();
                     let dest = self.builder.register_push_temp();
-                    
+
                     self.builder
                         .push_op(Instruction::Call(dest, r3, args.len()));
                     self.builder.register_clear(r1);
@@ -596,6 +593,17 @@ impl<'a> Compiler<'a>
                 v => panic!("Unimplemented {:?}", v),
             }
         } else {
+            if op == Op::Not {
+                let e1 = *e1;
+
+                self.translate_expr(e1);
+                let r = self.builder.register_pop();
+                let r2 = self.builder.register_push_temp();
+
+                self.builder.push_op(Instruction::Not(r2, r));
+                return;
+            }
+
             let e1 = *e1;
             let e2 = *e2;
 

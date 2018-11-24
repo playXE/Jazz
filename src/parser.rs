@@ -144,7 +144,7 @@ pub enum Expr
     Dot(Box<Expr>, Box<Expr>),
     Index(String, Box<Expr>),
     Array(Vec<Expr>),
-    New(String,Vec<Expr>),
+    New(String, Vec<Expr>),
     True,
     This,
     False,
@@ -172,6 +172,7 @@ pub enum Token
     CharConst(char),
     StringConst(String),
     GlobalIdent(String),
+    Null,
     Label,
     For,
     NewLine,
@@ -602,6 +603,7 @@ impl<'a> TokenIterator<'a>
                         "return" => return Some(Token::Return),
                         "new" => return Some(Token::New),
                         "func" => return Some(Token::Fn),
+                        "null" => return Some(Token::Null),
                         "enum" => return Some(Token::Enum),
                         "this" => return Some(Token::This),
                         "class" => return Some(Token::Class),
@@ -881,12 +883,13 @@ fn parse_paren_expr<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr,
     }
 }
 
-fn parse_new_expr<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr,ParseError> {
+fn parse_new_expr<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr, ParseError>
+{
     let mut args = Vec::new();
 
     let name = match input.next() {
         Some(Token::Identifier(ref s)) => s.clone(),
-        v => panic!("{:?}",v),
+        v => panic!("{:?}", v),
     };
 
     match input.peek() {
@@ -898,7 +901,7 @@ fn parse_new_expr<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr,Pa
 
     if let Some(&Token::RParen) = input.peek() {
         input.next();
-        return Ok(Expr::New(name,args));
+        return Ok(Expr::New(name, args));
     }
 
     loop {
@@ -1029,6 +1032,7 @@ fn parse_primary<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr, Pa
             Token::CharConst(ref c) => Ok(Expr::CharConst(*c)),
             Token::Identifier(ref s) => parse_ident_expr(s.clone(), input),
             Token::New => parse_new_expr(input),
+            Token::Null => Ok(Expr::Unit),
             Token::LParen => parse_paren_expr(input),
             Token::LSquare => parse_array_expr(input),
             Token::True => Ok(Expr::True),
@@ -1058,7 +1062,10 @@ fn parse_unary<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr, Pars
     match tok {
         Token::UnaryMinus => {
             input.next();
-            Ok(Expr::FnCall("-".to_string(), vec![parse_primary(input)?]))
+            Ok(Expr::FnCall(
+                "__unary_minus__".into(),
+                vec![parse_primary(input)?],
+            ))
         }
         Token::UnaryPlus => {
             input.next();
@@ -1066,7 +1073,11 @@ fn parse_unary<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<Expr, Pars
         }
         Token::Bang => {
             input.next();
-            Ok(Expr::FnCall("!".to_string(), vec![parse_primary(input)?]))
+            Ok(Expr::Op(
+                Op::Not,
+                Box::new(parse_primary(input)?),
+                Box::new(Expr::Unit),
+            ))
         }
         _ => parse_primary(input),
     }
@@ -1537,8 +1548,6 @@ fn parse_class<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<ClassDef, 
 
     Ok(def)
 }
-
-
 
 fn parse_fn<'a>(input: &mut Peekable<TokenIterator<'a>>) -> Result<FnDef, ParseError>
 {

@@ -177,7 +177,8 @@ impl FunctionBuilder
         self.register_pop_context_protect(false)
     }
 
-    pub fn register_clear(&mut self,nreg: usize) {
+    pub fn register_clear(&mut self, nreg: usize)
+    {
         if nreg >= self.nlocals {
             self.state[nreg] = false;
         }
