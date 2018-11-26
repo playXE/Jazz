@@ -21,6 +21,10 @@ impl Clone for Function
 
 impl crate::object::ObjectAddon for Function
 {
+    fn typename(&self,_: &mut Machine) -> String {
+        return "Func".into()
+    }
+
     fn as_function(&self) -> &Function
     {
         self
@@ -91,7 +95,14 @@ impl Object for Function
                     m.last_frame_mut().stack[i] = args[i];
                 }
                 let code = func.code;
-                m.run_code(code.clone())
+                let v = m.run_code(code);
+                match v {
+                    Ok(v) => return v,
+                    Err(e) => {
+                        eprintln!("{}",e);
+                        panic!("");
+                    }
+                }
             }
 
             Function::Native(nv) => nv.0(m, args),

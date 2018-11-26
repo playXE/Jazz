@@ -1,5 +1,3 @@
-///Value
-
 #[derive(Clone, Debug, Copy)]
 pub enum Value
 {
@@ -34,6 +32,19 @@ impl ObjectAddon for Value
         }
     }
 
+    fn typename(&self,m: &mut Machine) -> String {
+        match self {
+            Value::Bool(_) => String::from("Bool"),
+            Value::Double(_) => String::from("Float"),
+            Value::Long(_) => String::from("Int"),
+            Value::Object(id) => {
+                let obj = m.pool.get(*id);
+                obj.typename(m)
+            }
+            Value::Null => String::from("null"),
+            _ => unimplemented!()
+        }
+    }
     fn to_double(&self, m: &mut Machine) -> f64
     {
         match self {

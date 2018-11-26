@@ -2,10 +2,7 @@ use crate::{machine::Machine, object_pool::ObjectPool, value::Value};
 use std::any::Any;
 pub trait Object: Send + ObjectAddon
 {
-    fn typename(&self) -> String
-    {
-        String::from("Object")
-    }
+    
 
     fn initialize(&mut self, _: &mut ObjectPool)
     {
@@ -36,6 +33,11 @@ pub trait Object: Send + ObjectAddon
 
 pub trait ObjectAddon
 {
+    fn typename(&self,_m: &mut Machine) -> String
+    {
+        String::from("Object")
+    }
+
     fn o_clone(&self, _m: &mut Machine) -> Value
     {
         panic!("Cannot clone!");
@@ -97,5 +99,9 @@ pub trait ObjectAddon
     fn not(&self, _m: &mut Machine) -> bool
     {
         false
+    }
+
+    fn isa(&self,s: String,m: &mut Machine) -> bool {
+        self.typename(m) == s
     }
 }

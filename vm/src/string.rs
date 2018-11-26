@@ -24,16 +24,17 @@ impl ObjectAddon for String
     {
         self.parse::<i64>().unwrap()
     }
+    fn typename(&self,_m: &mut Machine) -> String
+    {
+        String::from("Str")
+    }
 }
 
 use std::any::Any;
 
 impl Object for String
 {
-    fn typename(&self) -> String
-    {
-        String::from("String")
-    }
+    
 
     fn initialize(&mut self, _: &mut ObjectPool)
     {

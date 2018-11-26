@@ -1,5 +1,8 @@
 use jazz_vm::{
-    machine::Machine, object::{Object, ObjectAddon}, object_pool::ObjectPool, value::Value
+    machine::Machine,
+    object::{Object, ObjectAddon},
+    object_pool::ObjectPool,
+    value::Value,
 };
 
 use std::{any::Any, cell::UnsafeCell, collections::HashMap};
@@ -13,16 +16,13 @@ use std::{any::Any, cell::UnsafeCell, collections::HashMap};
 ///
 ///
 #[derive(Debug)]
-pub struct Class
-{
+pub struct Class {
     pub name: String,
     pub fields: UnsafeCell<HashMap<String, Value>>,
 }
 
-impl Clone for Class
-{
-    fn clone(&self) -> Class
-    {
+impl Clone for Class {
+    fn clone(&self) -> Class {
         let fields = unsafe { (*self.fields.get()).clone() };
         Class {
             name: self.name.clone(),
@@ -31,10 +31,8 @@ impl Clone for Class
     }
 }
 
-impl Class
-{
-    pub fn new() -> Class
-    {
+impl Class {
+    pub fn new() -> Class {
         Class {
             name: String::from("<uninitialized>"),
             fields: UnsafeCell::new(HashMap::new()),
@@ -42,42 +40,47 @@ impl Class
     }
 }
 
-impl ObjectAddon for Class
-{
-    fn o_clone(&self, m: &mut Machine) -> Value
-    {
+impl ObjectAddon for Class {
+    fn o_clone(&self, m: &mut Machine) -> Value {
         let c = self.clone();
 
         let v = Value::Object(m.pool.allocate(Box::new(c)));
         v
     }
-    fn to_String(&self, _m: &mut Machine) -> String
-    {
-        let fields = unsafe { &*self.fields.get() };
-        format!("Class {} ({:?})", self.name, fields)
-    }
-}
-impl Object for Class
-{
-    fn as_any(&self) -> &dyn Any
-    {
-        self as &dyn Any
-    }
-    fn as_any_mut(&mut self) -> &mut dyn Any
-    {
-        self as &mut dyn Any
-    }
-    fn initialize(&mut self, _p: &mut ObjectPool)
-    {
+    fn typename(&self, _: &mut Machine) -> String {
+        return self.name.clone();
     }
 
-    fn get_children(&self) -> Vec<usize>
-    {
+    fn to_String(&self, _m: &mut Machine) -> String {
+        let fields: &HashMap<String, Value> = unsafe { &*self.fields.get() };
+        let mut string = String::new();
+        string.push_str(&format!("class {} {{ \n", self.name));
+        for (k, v) in fields.iter() {
+            string.push_str(&format!(
+                "\tvar {} = {};\n",
+                k.to_String(_m),
+                v.to_String(_m)
+            ));
+        }
+        string.push_str("}");
+
+        string
+    }
+}
+impl Object for Class {
+    fn as_any(&self) -> &dyn Any {
+        self as &dyn Any
+    }
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self as &mut dyn Any
+    }
+    fn initialize(&mut self, _p: &mut ObjectPool) {}
+
+    fn get_children(&self) -> Vec<usize> {
         Vec::new()
     }
 
-    fn call(&self, m: &mut Machine, args: Vec<Value>) -> Value
-    {
+    fn call(&self, m: &mut Machine, args: Vec<Value>) -> Value {
         let class = if let Value::Object(id) = args[0] {
             let obj = m.pool.get(id);
 
@@ -98,15 +101,13 @@ impl Object for Class
         ret
     }
 
-    fn store_at(&self, m: &mut Machine, args: Vec<Value>, _: usize)
-    {
+    fn store_at(&self, m: &mut Machine, args: Vec<Value>, _: usize) {
         let fname = args[1].to_String(m);
         let fields = unsafe { &mut *self.fields.get() };
         fields.insert(fname, args[2]);
     }
 
-    fn load_at(&self, m: &mut Machine, args: Vec<Value>, rindex: usize)
-    {
+    fn load_at(&self, m: &mut Machine, args: Vec<Value>, rindex: usize) {
         let _this = args[0];
         if let Value::Object(id) = args[1] {
             let str = m.pool.get(id).to_String(m);

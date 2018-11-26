@@ -1,5 +1,6 @@
 use crate::{frame::*, object::ObjectAddon, object_pool::ObjectPool, opcodes::*, value::Value};
 use std::collections::HashMap;
+use crate::error::VmError;
 
 macro_rules! for_c {
     ($v:ident = $v1:expr; $e:expr;$ex:expr, $b: block) => {
@@ -84,7 +85,7 @@ impl Machine
         self.last_frame_mut().ip = idx;
     }
 
-    pub fn run_code(&mut self, code: Vec<Instruction>) -> Value
+    pub fn run_code(&mut self, code: Vec<Instruction>) -> Result<Value,VmError>
     {
         for_c!(i = 0;i < code.len();i += 1, {
             if let Instruction::Label(lbl_id) = code[i] {
@@ -100,7 +101,7 @@ impl Machine
         self.execute_op()
     }
 
-    pub fn execute_op(&mut self) -> Value
+    pub fn execute_op(&mut self) -> Result<Value,VmError>
     {
         let mut returns = false;
         let mut ret = Value::Null;
@@ -146,6 +147,14 @@ impl Machine
 
                 Instruction::LoadFloat(dest, float) => {
                     self.set(*dest, Value::Float(*float));
+                }
+
+                Instruction::Isa(dest,r1,r2) => {
+                    let (v1,v2) = (self.get(*r1),self.get(*r2));
+                    let n = v2.typename(self);
+                    println!("{:?}",v2.typename(self));                  
+                    let result = v1.isa(n,self);
+                    self.set(*dest,Value::Bool(result));
                 }
 
                 Instruction::Add(dest, r1, r2) => {
@@ -470,7 +479,7 @@ impl Machine
                         let idx = &self.labels[lbl_id];
                         self.branch(*idx + 1);
                     } else {
-                        panic!("Label with id `{}` doesn't exists", lbl_id);
+                        return Err(VmError::LabelNotFound(*lbl_id));
                     }
                 }
 
@@ -481,17 +490,12 @@ impl Machine
                                 let idx = &self.labels[lbl_id];
                                 self.branch(*idx + 1);
                             } else {
-                                panic!("Label with id `{}`,doesn't exists", lbl_id)
+                                return Err(VmError::LabelNotFound(*lbl_id));
                             }
                         }
                     }
 
-                    v => panic!(
-                        "Failed GotoF {} {:?}\n prev opcode {:?}",
-                        r1,
-                        v,
-                        self.last_frame().code[self.last_frame().ip - 1]
-                    ),
+                    _v => return Err(VmError::RuntimeError("GotoF exptected Bool value".into())),
                 },
 
                 Instruction::Jump(idx) => {
@@ -503,7 +507,7 @@ impl Machine
                         let value = &self.globals[index];
                         self.set(*r1, *value);
                     } else {
-                        panic!("No value with index `{}` in globals", index);
+                        return Err(VmError::GlobalNotFound(*index));
                     }
                 }
 
@@ -519,8 +523,7 @@ impl Machine
                             self.branch(*idx);
                         }
                     } else {
-                        println!("{:?}", v);
-                        panic!("");
+                        return Err(VmError::RuntimeError("Expected Bool value; Op JumpF".into()));
                     }
                 }
 
@@ -549,8 +552,7 @@ impl Machine
                         let this = self.get(*r2);
                         obj.load_at(self, vec![this, v3], *r1);
                     } else {
-                        println!("Found: R({}) = {:?}", r2,v2);
-                        panic!("\nExpected Object value\nIP = {}\nOpcodes: {:?}\n",self.last_frame().ip,self.last_frame().code);
+                        return Err(VmError::Expected("Value::Object".into(),format!("{:?}",v2)));
                     }
                 }
 
@@ -562,7 +564,7 @@ impl Machine
                         let obj = self.pool.get(*obj_id);
                         obj.store_at(self, vec![target, key, value], 0);
                     } else {
-                        panic!("Expected Object value");
+                        return Err(VmError::Expected("Value::Object".into(),format!("{:?}",&target)));
                     }
                 }
 
@@ -574,6 +576,6 @@ impl Machine
 
         let _result = start.to(end).num_milliseconds();
 
-        ret
+        Ok(ret)
     }
 }

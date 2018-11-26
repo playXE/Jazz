@@ -1,17 +1,19 @@
 use jazz_vm::{
-    function::Function, machine::Machine, object::{Object, ObjectAddon}, object_pool::ObjectPool, value::Value
+    function::Function,
+    machine::Machine,
+    object::{Object, ObjectAddon},
+    object_pool::ObjectPool,
+    value::Value,
 };
 
 use std::{cell::RefCell, io::stdin};
 
 #[derive(Clone)]
-pub struct Array
-{
+pub struct Array {
     elements: RefCell<Vec<Value>>,
 }
 
-pub fn array_pop(m: &mut Machine, args: Vec<Value>) -> Value
-{
+pub fn array_pop(m: &mut Machine, args: Vec<Value>) -> Value {
     if let Value::Object(id) = &args[1] {
         let obj = m.pool.get(*id).as_any();
 
@@ -28,8 +30,7 @@ pub fn array_pop(m: &mut Machine, args: Vec<Value>) -> Value
     }
 }
 
-pub fn array_push(m: &mut Machine, args: Vec<Value>) -> Value
-{
+pub fn array_push(m: &mut Machine, args: Vec<Value>) -> Value {
     if let Value::Object(id) = &args[0] {
         let obj = m.pool.get(*id).as_any();
 
@@ -47,8 +48,7 @@ pub fn array_push(m: &mut Machine, args: Vec<Value>) -> Value
     }
 }
 
-pub fn array_size(m: &mut Machine, args: Vec<Value>) -> Value
-{
+pub fn array_size(m: &mut Machine, args: Vec<Value>) -> Value {
     if let Value::Object(id) = &args[0] {
         let obj = m.pool.get(*id).as_any();
 
@@ -63,8 +63,7 @@ pub fn array_size(m: &mut Machine, args: Vec<Value>) -> Value
     }
 }
 
-pub fn array_get(m: &mut Machine, args: Vec<Value>) -> Value
-{
+pub fn array_get(m: &mut Machine, args: Vec<Value>) -> Value {
     if let Value::Object(id) = &args[0] {
         let obj = m.pool.get(*id).as_any();
         let idx = match &args[1] {
@@ -83,8 +82,7 @@ pub fn array_get(m: &mut Machine, args: Vec<Value>) -> Value
     }
 }
 
-pub fn array_set(m: &mut Machine, args: Vec<Value>) -> Value
-{
+pub fn array_set(m: &mut Machine, args: Vec<Value>) -> Value {
     if let Value::Object(id) = &args[0] {
         let obj = m.pool.get(*id).as_any();
         let idx = match &args[1] {
@@ -104,22 +102,18 @@ pub fn array_set(m: &mut Machine, args: Vec<Value>) -> Value
     }
 }
 
-impl Array
-{
-    pub fn new() -> Array
-    {
+impl Array {
+    pub fn new() -> Array {
         Array {
             elements: RefCell::new(Vec::new()),
         }
     }
 
-    pub fn push(&self, v: Value)
-    {
+    pub fn push(&self, v: Value) {
         self.elements.borrow_mut().push(v);
     }
 
-    pub fn pop(&self) -> Value
-    {
+    pub fn pop(&self) -> Value {
         let mut elements = self.elements.borrow_mut();
         let value = {
             let value = elements.pop();
@@ -132,23 +126,19 @@ impl Array
         value
     }
 
-    pub fn set(&self, idx: usize, v: Value)
-    {
+    pub fn set(&self, idx: usize, v: Value) {
         self.elements.borrow_mut()[idx] = v;
     }
 
-    pub fn get(&self, idx: usize) -> Value
-    {
+    pub fn get(&self, idx: usize) -> Value {
         self.elements.borrow()[idx]
     }
 }
 
 use std::any::Any;
 
-impl ObjectAddon for Array
-{
-    fn to_String(&self, m: &mut Machine) -> String
-    {
+impl ObjectAddon for Array {
+    fn to_String(&self, m: &mut Machine) -> String {
         let elements = self.elements.borrow();
 
         let mut string = String::new();
@@ -167,28 +157,21 @@ impl ObjectAddon for Array
     }
 }
 
-impl Object for Array
-{
-    fn initialize(&mut self, _: &mut ObjectPool)
-    {
-    }
-    fn as_any(&self) -> &dyn Any
-    {
+impl Object for Array {
+    fn initialize(&mut self, _: &mut ObjectPool) {}
+    fn as_any(&self) -> &dyn Any {
         self as &dyn Any
     }
 
-    fn as_any_mut(&mut self) -> &mut dyn Any
-    {
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self as &mut dyn Any
     }
 
-    fn get_children(&self) -> Vec<usize>
-    {
+    fn get_children(&self) -> Vec<usize> {
         Vec::new()
     }
 
-    fn load_at(&self, m: &mut Machine, args: Vec<Value>, rindex: usize)
-    {
+    fn load_at(&self, m: &mut Machine, args: Vec<Value>, rindex: usize) {
         let _this = args[0];
         if let Value::Object(id) = &args[1] {
             let str: &str = &m.pool.get(*id).to_String(m);
@@ -235,8 +218,7 @@ impl Object for Array
         }
     }
 
-    fn store_at(&self, m: &mut Machine, args: Vec<Value>, _rindex: usize)
-    {
+    fn store_at(&self, m: &mut Machine, args: Vec<Value>, _rindex: usize) {
         let idx = args[1];
         let value = args[2];
 
@@ -245,8 +227,7 @@ impl Object for Array
     }
 }
 
-pub fn new_array(m: &mut Machine, args: Vec<Value>) -> Value
-{
+pub fn new_array(m: &mut Machine, args: Vec<Value>) -> Value {
     let array = Array::new();
     for i in 1..args.len() {
         array.push(args[args.len() - i]);
@@ -255,8 +236,7 @@ pub fn new_array(m: &mut Machine, args: Vec<Value>) -> Value
     object
 }
 
-pub fn concat(m: &mut Machine, args: Vec<Value>) -> Value
-{
+pub fn concat(m: &mut Machine, args: Vec<Value>) -> Value {
     let mut buffer = String::new();
     for i in 1..args.len() {
         buffer.push_str(&args[i].to_String(m));
@@ -265,8 +245,7 @@ pub fn concat(m: &mut Machine, args: Vec<Value>) -> Value
     object
 }
 
-pub fn print(m: &mut Machine, args: Vec<Value>) -> Value
-{
+pub fn print(m: &mut Machine, args: Vec<Value>) -> Value {
     for i in 1..args.len() {
         let str = args[i].to_String(m);
 
@@ -276,8 +255,7 @@ pub fn print(m: &mut Machine, args: Vec<Value>) -> Value
     Value::Null
 }
 
-pub fn readln(m: &mut Machine, _args: Vec<Value>) -> Value
-{
+pub fn readln(m: &mut Machine, _args: Vec<Value>) -> Value {
     let mut buffer = String::new();
     stdin().read_line(&mut buffer).unwrap();
     let obj = Value::Object(m.pool.allocate(Box::new(buffer)));

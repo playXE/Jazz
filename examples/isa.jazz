@@ -1,0 +1,13 @@
+func test(v) {
+    if v~Int {
+        return "Int";
+    }
+    if v~Float {
+        return "Float";
+    }
+}
+
+func main() {
+    System.print(test(2));
+    System.print(test(2.5))
+}

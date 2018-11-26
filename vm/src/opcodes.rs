@@ -74,6 +74,8 @@ pub enum Instruction
     /// R(A) = B(Args), C - Arg count, args poped from arg stack
     Call(usize, usize, usize),
 
+    Isa(usize,usize,usize),
+
     Not(usize, usize),
     ///Add R(A) = R(B) + R(C)
     Add(usize, usize, usize),
@@ -124,6 +126,7 @@ impl fmt::Display for Instruction
         use self::Instruction::*;
 
         match self {
+            Isa(dest,r1,r2) => write!(f,"Isa {} {} {}",dest,r1,r2),
             Not(r1, r2) => write!(f, "Not {} {}", r1, r2),
             Add(r3, r1, r2) => write!(f, "Add {} {} {}", r3, r1, r2),
             Sub(r3, r1, r2) => write!(f, "Sub {} {} {}", r3, r1, r2),
@@ -176,6 +179,7 @@ impl fmt::Debug for Instruction
         use self::Instruction::*;
 
         match self {
+            Isa(dest,r1,r2) => write!(f,"Isa {} {} {}",dest,r1,r2),
             Not(r1, r2) => write!(f, "Not {} {}", r1, r2),
             Add(r3, r1, r2) => write!(f, "Add {} {} {}", r3, r1, r2),
             Sub(r3, r1, r2) => write!(f, "Sub {} {} {}", r3, r1, r2),

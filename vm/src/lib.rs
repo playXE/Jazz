@@ -32,6 +32,7 @@ pub mod opcodes;
 pub mod static_root;
 pub mod string;
 pub mod value;
+pub mod error;
 
 use time;
 

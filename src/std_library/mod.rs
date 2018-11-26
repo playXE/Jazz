@@ -4,8 +4,7 @@ use float_duration;
 use jazz_vm::{function::Function, machine::Machine, value::Value};
 use std::{cell::UnsafeCell, collections::HashMap, time::Instant};
 
-pub fn time(m: &mut Machine, _: Vec<Value>) -> Value
-{
+pub fn time(m: &mut Machine, _: Vec<Value>) -> Value {
     let now = Instant::now();
     let duration = FloatDuration::from_std(now.elapsed());
 
@@ -14,8 +13,7 @@ pub fn time(m: &mut Machine, _: Vec<Value>) -> Value
     return obj;
 }
 
-pub fn system_class(m: &mut Machine) -> Class
-{
+pub fn system_class(m: &mut Machine) -> Class {
     let mut fields = HashMap::new();
     let f = Function::from_native(Box::new(print));
     fields.insert(
@@ -42,12 +40,32 @@ pub fn system_class(m: &mut Machine) -> Class
     }
 }
 
-pub fn unary_minus(m: &mut Machine) -> Value
-{
+pub fn unary_minus(m: &mut Machine) -> Value {
     use jazz_vm::opcodes::Instruction::*;
 
     let code = vec![LoadLong(2, 0), Move(3, 1), Sub(3, 2, 3), Ret(3)];
 
     let func = Function::from_instructions(code, 1);
     Value::Object(m.pool.allocate(Box::new(func)))
+}
+
+pub fn int_class() -> Class {
+    Class {
+        name: String::from("Int"),
+        fields: UnsafeCell::new(HashMap::new()),
+    }
+}
+
+pub fn float_class() -> Class {
+    Class {
+        name: String::from("Float"),
+        fields: UnsafeCell::new(HashMap::new()),
+    }
+}
+
+pub fn str_class() -> Class {
+    Class {
+        name: String::from("Str"),
+        fields: UnsafeCell::new(HashMap::new()),
+    }
 }

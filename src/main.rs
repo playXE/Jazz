@@ -2,7 +2,8 @@ extern crate jazz;
 extern crate jazz_vm;
 extern crate structopt;
 use jazz::{
-    parser::{lex, parse}, Compiler
+    parser::{lex, parse},
+    Compiler,
 };
 use jazz_vm::machine::Machine;
 
@@ -10,16 +11,14 @@ use std::{fs::File, io::prelude::*, path::PathBuf};
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
-pub struct Options
-{
+pub struct Options {
     #[structopt(name = "FILE", parse(from_os_str))]
     file: Option<PathBuf>,
     #[structopt(short = "d", long = "debug")]
     debug: bool,
 }
 
-fn main()
-{
+fn main() {
     let mut src = String::new();
 
     let ops = Options::from_args();
