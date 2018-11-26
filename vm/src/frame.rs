@@ -2,7 +2,7 @@ use crate::{opcodes::Instruction, value::Value};
 
 ///CallFrame
 /// Stores register values, Blocks of code, registers and arguments stack
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug,Default)]
 pub struct CallFrame
 {
     /// pointer to current block
@@ -67,7 +67,7 @@ impl CallStack
     /// Get top frame
     pub fn top(&self) -> &CallFrame
     {
-        if self.n_frames <= 0 {
+        if self.n_frames == 0 {
             panic!("Virtual stack underflow");
         }
         &self.frames[self.n_frames - 1]
@@ -75,7 +75,7 @@ impl CallStack
     /// Get &mut CallFrame
     pub fn top_mut(&mut self) -> &mut CallFrame
     {
-        if self.n_frames <= 0 {
+        if self.n_frames == 0 {
             panic!("Virtual stack underflow");
         }
         &mut self.frames[self.n_frames - 1]

@@ -30,7 +30,7 @@ impl ObjectAddon for Value
                 let obj = m.pool.get(*id);
                 obj.o_clone(m)
             }
-            v => v.clone(),
+            v => *v,
         }
     }
 
@@ -172,32 +172,16 @@ impl ObjectAddon for Value
         match self {
             Value::Null => true,
             Value::Int(i) => {
-                if *i == 0 {
-                    true
-                } else {
-                    false
-                }
+                *i == 0
             }
             Value::Long(l) => {
-                if *l == 0 {
-                    true
-                } else {
-                    false
-                }
+                *l == 0
             }
             Value::Double(b) => {
-                if *b == 0.0 {
-                    true
-                } else {
-                    false
-                }
+                *b == 0.0
             }
             Value::Float(f) => {
-                if *f == 0.0 {
-                    true
-                } else {
-                    false
-                }
+                *f == 0.0
             }
             Value::Bool(b) => !b,
             _ => unimplemented!(),

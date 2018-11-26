@@ -1,6 +1,5 @@
 use crate::{machine::Machine, object::Object, opcodes::*, value::Value};
 use std::any::Any;
-use crate::object::ObjectAddon;
 
 #[derive(Debug)]
 pub enum Function
@@ -87,7 +86,7 @@ impl Object for Function
                 //println!("{:?}",args);
                 let func = vf.clone();
                 //println!("{:?}",args[0].to_String(m));
-                //m.last_frame_mut().stack[0] = args[0];
+                m.last_frame_mut().stack[0] = args[0];
                 for i in 0..args.len() {
                     m.last_frame_mut().stack[i] = args[i];
                 }

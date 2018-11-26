@@ -56,7 +56,7 @@ impl ObjectInfo
 
     pub fn has_native_refs(&self) -> bool
     {
-        !(self.native_ref_info.n_refs.get() == 0)
+        self.native_ref_info.n_refs.get() != 0
     }
 
     pub fn handle<'a>(&self) -> ObjectHandle<'a>

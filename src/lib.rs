@@ -90,7 +90,7 @@ impl<'a> Compiler<'a>
     pub fn compile(&mut self, globals: Vec<Global>) -> Value
     {
         for global in globals.iter() {
-            self.gp += 1;
+            
             if let Global::ClassDefinition(ref class) = &global {
                 let name = if let Expr::Identifier(ref n) = &*class.name {
                     n.to_string()
@@ -111,12 +111,11 @@ impl<'a> Compiler<'a>
 
                 self.globals.insert(name.clone(), self.gp);
             }
+            self.gp += 1;
         }
 
-        self.gp = 5;
 
         for global in globals.iter() {
-            self.gp += 1;
 
             if let Global::ClassDefinition(ref classdef) = global {
                 let mut class = Class::new();
@@ -180,9 +179,11 @@ impl<'a> Compiler<'a>
                     }
                 }
 
+                let ptr = self.globals.get(&name).unwrap().clone();
+
                 let cls = self.machine.pool.allocate(Box::new(class));
-                self.machine.globals.insert(self.gp, Value::Object(cls));
-                self.globals.insert(name, self.gp);
+                self.machine.globals.insert(ptr, Value::Object(cls));
+                self.globals.insert(name, ptr);
             }
 
             if let Global::FnDefenition(ref fun) = global {
@@ -210,16 +211,16 @@ impl<'a> Compiler<'a>
 
                 let function = Function::from_instructions(code, fun.params.len());
                 let func = self.machine.pool.allocate(Box::new(function));
-                self.machine.globals.insert(self.gp, Value::Object(func));
-                self.globals.insert(name, self.gp);
+                let ptr = self.globals.get(&name).unwrap().clone();
+                self.machine.globals.insert(ptr, Value::Object(func));
+                self.globals.insert(name, ptr);
             }
         }
 
         let main = self.globals.get("main").expect("main not found").clone();
         let main = self.machine.globals.get(&main).expect("main not found");
         let start = Instant::now();
-        let ret = self.machine.invoke(*main, vec![]);
-        self.machine.stack.pop();
+        let ret = self.machine.invoke(*main, vec![Value::Null]);
         let end = Instant::now();
         println!(
             "RESULT: {} (in {})",
@@ -268,19 +269,6 @@ impl<'a> Compiler<'a>
                 self.translate_expr(*expr);
                 self.builder.push_op(Instruction::Goto(compare));
                 self.builder.label_here(end);
-                /*let check_label = self.builder.new_empty_label();
-                let end_label = self.builder.new_empty_label();
-                
-                self.translate_stmt(*value);
-                
-                self.builder.label_here(check_label);
-                self.translate_expr(*condition);
-                let reg = self.builder.register_pop();
-                self.builder.goto_false(end_label, reg);
-                self.translate_stmt(*block);
-                self.translate_expr(*expr);
-                self.builder.goto(check_label);
-                self.builder.label_here(end_label);*/
             }
 
             Stmt::While(condition, block) => {
@@ -295,18 +283,6 @@ impl<'a> Compiler<'a>
                 self.translate_stmt(*block);
                 self.builder.push_op(Instruction::Goto(compare));
                 self.builder.label_here(end);
-                /*let check_label = self.builder.new_empty_label();
-                let end_label = self.builder.new_empty_label();
-                
-                self.builder.label_here(check_label);
-                
-                self.translate_expr(*condition);
-                let reg = self.builder.register_pop();
-                self.builder.goto_false(end_label, reg);
-                self.translate_stmt(block);
-                
-                self.builder.goto(check_label);
-                self.builder.label_here(end_label);*/
             }
 
             Stmt::Var(ref name, ref expr) => {
@@ -367,7 +343,8 @@ impl<'a> Compiler<'a>
                     self.builder.push_op(Instruction::LoadArg(r));
                 }
 
-                let dest = self.builder.register_push_temp();
+                
+                
                 let fptr = if !self.globals.contains_key(fname) {
                     let r = self.builder.get_local(fname);
                     r
@@ -376,11 +353,17 @@ impl<'a> Compiler<'a>
                         .globals
                         .get(fname)
                         .expect(&format!("Function not found `{}`", fname));
-                    let register = self.builder.register_first_temp_available();
+                    let register = self.builder.register_push_temp();
                     self.builder
                         .push_op(Instruction::LoadGlobal(register, *idx));
                     register
                 };
+                let mut dest = fptr;
+                let mut _dest_is_temp = self.builder.register_is_temp(dest);
+                if !_dest_is_temp {
+                    dest = self.builder.register_push_temp();
+                    _dest_is_temp = true;
+                }
                 self.builder.push_op(Instruction::LoadArg(fptr));
                 self.builder
                     .push_op(Instruction::Call(dest, fptr, args.len()));
@@ -409,39 +392,10 @@ impl<'a> Compiler<'a>
                         .push_op(Instruction::LoadGlobal(register, *idx));
                     register
                 };
+
                 self.builder.push_op(Instruction::LoadArg(fptr));
                 self.builder
                     .push_op(Instruction::Call(dest, fptr, args.len()));
-                /*let mut args = args.clone();
-                args.reverse();
-                for arg in args.iter() {
-                    self.translate_expr(arg.clone());
-                    let r = self.builder.register_pop();
-                    self.builder.push_op(Instruction::LoadArg(r));
-                }
-                
-                let dest = self.builder.register_push_temp();
-                let optr = if !self.globals.contains_key(&name) {
-                    let r = self.builder.get_local(&name);
-                    r
-                } else {
-                    let idx = self
-                        .globals
-                        .get(&name)
-                        .expect(&format!("Object not found `{}`", name));
-                    let register = self.builder.register_first_temp_available();
-                    self.builder
-                        .push_op(Instruction::LoadGlobal(register, *idx));
-                    register
-                }; 
-                
-                self.builder.push_op(Instruction::LoadArg(optr));
-                
-                let r = self.builder.register_push_temp();
-                self.builder.push_op(Instruction::LoadString(r+1,"init".to_owned()));
-                self.builder.push_op(Instruction::LoadAt(dest,optr,r+1));
-                let dest2 = self.builder.register_push_temp();
-                self.builder.push_op(Instruction::Call(dest2,dest,args.len()));*/
             }
 
             Expr::Array(arr_expr) => {
@@ -554,19 +508,18 @@ impl<'a> Compiler<'a>
         if op == Op::Access {
             match (*e1, *e2) {
                 (this, Expr::Identifier(field)) => {
+
                     let r2 = self.builder.register_push_temp();
                     self.translate_expr(this);
                     let r1 = self.builder.register_pop();
                     self.builder.push_op(Instruction::LoadString(r2, field));
                     let r3 = self.builder.register_push_temp();
-                    self.builder.push_op(Instruction::LoadAt(r3, r1, r2));
+                    self.builder.push_op(Instruction::LoadAt(r3, r1, r2)); 
+                    self.builder.register_clear(r1);
+                    self.builder.register_clear(r2);                  
                 }
                 (this, Expr::FnCall(fname, args)) => {
-                    let r2 = self.builder.register_push_temp();
-
-                    self.translate_expr(this);
-                    let r1 = self.builder.register_pop();
-                    let r3 = self.builder.register_push_temp();
+                    
                     let mut args = args.clone();
                     args.reverse();
                     for arg in args.iter() {
@@ -575,20 +528,30 @@ impl<'a> Compiler<'a>
 
                         self.builder.push_op(Instruction::LoadArg(r));
                     }
+                    self.translate_expr(this);
+                    let r1 = self.builder.register_pop();
+                    let mut r2 = self.builder.register_push_temp();
+                    if self.builder.register_is_temp(r2) {
+                        r2 = self.builder.register_push_temp();
+                    }
+                    let r3 = self.builder.register_push_temp();
                     self.builder.push_op(Instruction::LoadArg(r1));
 
                     self.builder.push_op(Instruction::LoadString(r2, fname));
 
                     self.builder.push_op(Instruction::LoadAt(r3, r1, r2));
                     //self.builder.register_pop();
-                    let dest = self.builder.register_push_temp();
-
+                    let mut dest = self.builder.register_push_temp();
+                    let mut _dest_is_temp = self.builder.register_is_temp(dest);
+                    if !_dest_is_temp {
+                        dest = self.builder.register_push_temp();
+                        _dest_is_temp = true;
+                    }
                     self.builder
                         .push_op(Instruction::Call(dest, r3, args.len()));
+                    self.builder.register_clear(r3);
                     self.builder.register_clear(r1);
                     self.builder.register_clear(r2);
-                    self.builder.register_clear(r3);
-                    //self.builder.register_clear(dest);
                 }
                 v => panic!("Unimplemented {:?}", v),
             }
@@ -609,31 +572,31 @@ impl<'a> Compiler<'a>
 
             self.translate_expr(e1);
             self.translate_expr(e2);
+            let r3 = self.builder.register_pop();
             let r2 = self.builder.register_pop();
-            let r1 = self.builder.register_pop();
-            let r3 = self.builder.register_push_temp();
+            let r1 = self.builder.register_push_temp();
             match op {
-                Op::Add => self.builder.push_op(Instruction::Add(r3, r1, r2)),
-                Op::Sub => self.builder.push_op(Instruction::Sub(r3, r1, r2)),
-                Op::Mul => self.builder.push_op(Instruction::Mul(r3, r1, r2)),
-                Op::Div => self.builder.push_op(Instruction::Div(r3, r1, r2)),
-                Op::Eq => self.builder.push_op(Instruction::Eq(r3, r1, r2)),
-                Op::Gt => self.builder.push_op(Instruction::Gt(r3, r1, r2)),
-                Op::Lt => self.builder.push_op(Instruction::Lt(r3, r1, r2)),
-                Op::Le => self.builder.push_op(Instruction::Le(r3, r1, r2)),
-                Op::Ge => self.builder.push_op(Instruction::Ge(r3, r1, r2)),
-                Op::And => self.builder.push_op(Instruction::And(r3, r1, r2)),
-                Op::Or => self.builder.push_op(Instruction::Or(r3, r1, r2)),
-                Op::BitOr => self.builder.push_op(Instruction::BitOr(r3, r1, r2)),
-                Op::BitAnd => self.builder.push_op(Instruction::BitAnd(r3, r1, r2)),
-                Op::BitXor => self.builder.push_op(Instruction::BitXor(r3, r1, r2)),
-                Op::Shl => self.builder.push_op(Instruction::Shl(r3, r1, r2)),
-                Op::Shr => self.builder.push_op(Instruction::Shr(r3, r1, r2)),
+                Op::Add => self.builder.push_op(Instruction::Add(r1, r2, r3)),
+                Op::Sub => self.builder.push_op(Instruction::Sub(r1, r2, r3)),
+                Op::Mul => self.builder.push_op(Instruction::Mul(r1, r2, r3)),
+                Op::Div => self.builder.push_op(Instruction::Div(r1, r2, r3)),
+                Op::Eq => self.builder.push_op(Instruction::Eq(r1, r2, r3)),
+                Op::Gt => self.builder.push_op(Instruction::Gt(r1, r2, r3)),
+                Op::Lt => self.builder.push_op(Instruction::Lt(r1, r2, r3)),
+                Op::Le => self.builder.push_op(Instruction::Le(r1, r2, r3)),
+                Op::Ge => self.builder.push_op(Instruction::Ge(r1, r2, r3)),
+                Op::And => self.builder.push_op(Instruction::And(r1, r2, r3)),
+                Op::Or => self.builder.push_op(Instruction::Or(r1, r2, r3)),
+                Op::BitOr => self.builder.push_op(Instruction::BitOr(r1, r2, r3)),
+                Op::BitAnd => self.builder.push_op(Instruction::BitAnd(r1, r2, r3)),
+                Op::BitXor => self.builder.push_op(Instruction::BitXor(r1, r2, r3)),
+                Op::Shl => self.builder.push_op(Instruction::Shl(r1, r2, r3)),
+                Op::Shr => self.builder.push_op(Instruction::Shr(r1, r2, r3)),
 
                 _ => unimplemented!(),
             }
             self.builder.register_clear(r2);
-            self.builder.register_clear(r1);
+            self.builder.register_clear(r3);
         }
     }
 }

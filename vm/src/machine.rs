@@ -87,11 +87,10 @@ impl Machine
     pub fn run_code(&mut self, code: Vec<Instruction>) -> Value
     {
         for_c!(i = 0;i < code.len();i += 1, {
-            match code[i] {
-                Instruction::Label(lbl_id) => {
-                    self.labels.insert(lbl_id, i);
-                },
-                _ => {}
+            if let Instruction::Label(lbl_id) = code[i] {
+                
+                self.labels.insert(lbl_id, i);
+                
             };
         });
 
@@ -113,7 +112,8 @@ impl Machine
             }
 
             let opcode = self.last_frame().code[self.last_frame().ip].clone();
-
+            self.last_frame_mut().ip += 1;
+            //println!("{:?}",self.last_frame().code[self.last_frame().ip]);
             match &opcode {
                 Instruction::Label(_label_id) => {}
 
@@ -199,9 +199,6 @@ impl Machine
                     let v = self.invoke(value, args);
                     self.stack.pop();
                     self.set(*dest, v);
-
-                    self.dispatch();
-                    continue;
                 }
                 Instruction::Sub(dest, r1, r2) => {
                     let (v1, v2) = (self.get(*r1), self.get(*r2));
@@ -471,7 +468,7 @@ impl Machine
                 Instruction::Goto(lbl_id) => {
                     if self.labels.contains_key(lbl_id) {
                         let idx = &self.labels[lbl_id];
-                        self.branch(*idx - 1);
+                        self.branch(*idx + 1);
                     } else {
                         panic!("Label with id `{}` doesn't exists", lbl_id);
                     }
@@ -482,18 +479,10 @@ impl Machine
                         if !b {
                             if self.labels.contains_key(lbl_id) {
                                 let idx = &self.labels[lbl_id];
-                                self.branch(*idx - 1);
+                                self.branch(*idx + 1);
                             } else {
                                 panic!("Label with id `{}`,doesn't exists", lbl_id)
                             }
-                        }
-                    }
-                    Value::Null => {
-                        if self.labels.contains_key(lbl_id) {
-                            let idx = &self.labels[lbl_id];
-                            self.branch(*idx);
-                        } else {
-                            panic!("Label with id `{}`,doesn't exists", lbl_id)
                         }
                     }
 
@@ -511,7 +500,7 @@ impl Machine
 
                 Instruction::LoadGlobal(r1, index) => {
                     if self.globals.contains_key(index) {
-                        let value = self.globals.get(index).unwrap();
+                        let value = &self.globals[index];
                         self.set(*r1, *value);
                     } else {
                         panic!("No value with index `{}` in globals", index);
@@ -542,6 +531,7 @@ impl Machine
                 }
 
                 Instruction::Ret(idx) => {
+
                     ret = self.get(*idx);
                     returns = true;
                 }
@@ -555,13 +545,12 @@ impl Machine
                     let v3 = self.get(*r3);
 
                     if let Value::Object(obj_id) = v2 {
-                        //let this = self.last_frame_mut().arg_stack.pop().expect("No this value");
                         let obj = self.pool.get(obj_id);
                         let this = self.get(*r2);
                         obj.load_at(self, vec![this, v3], *r1);
                     } else {
                         println!("Found: R({}) = {:?}", r2,v2);
-                        panic!("Expected Object value\n IP = {}\nOpcodes: {:?}",self.last_frame().ip,self.last_frame().code);
+                        panic!("\nExpected Object value\nIP = {}\nOpcodes: {:?}\n",self.last_frame().ip,self.last_frame().code);
                     }
                 }
 
@@ -571,7 +560,7 @@ impl Machine
                     let key = self.get(*r3);
                     if let Value::Object(obj_id) = &target {
                         let obj = self.pool.get(*obj_id);
-                        obj.store_at(self, vec![target, key, value], 0);;
+                        obj.store_at(self, vec![target, key, value], 0);
                     } else {
                         panic!("Expected Object value");
                     }
@@ -579,7 +568,7 @@ impl Machine
 
                 v => panic!("{:?}", v),
             }
-            self.last_frame_mut().ip += 1;
+            
         }
         let end = super::time::PreciseTime::now();
 
