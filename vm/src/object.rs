@@ -3,11 +3,10 @@ use std::any::Any;
 pub trait Object: Send + ObjectAddon
 {
     
-
+    /// Initialized
     fn initialize(&mut self, _: &mut ObjectPool)
     {
     }
-
     fn call(&self, _m: &mut Machine, _args: Vec<Value>) -> Value
     {
         Value::Null

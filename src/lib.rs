@@ -1,4 +1,3 @@
-#![feature(duration_as_u128)]
 #![warn(rust_2018_idioms)]
 
 pub mod builtins;

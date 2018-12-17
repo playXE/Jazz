@@ -33,37 +33,39 @@ impl Machine
             labels: HashMap::new(),
         }
     }
-
+    /// Get last frame in CallStack
     pub fn last_frame(&self) -> &CallFrame
     {
         self.stack.last().unwrap()
     }
 
+    /// Get mutable reference to last frame in CallStack
     pub fn last_frame_mut(&mut self) -> &mut CallFrame
     {
         self.stack.last_mut().unwrap()
     }
-
+    /// Get value for register
     pub fn get(&mut self, rnum: usize) -> Value
     {
         self.last_frame().get(rnum)
     }
 
+    /// Set `this` value
     pub fn set_this(&mut self, v: Value)
     {
         self.last_frame_mut().stack[0] = v;
     }
-
+    /// Set R(r) = v
     pub fn set(&mut self, r: usize, v: Value)
     {
         self.last_frame_mut().set(r, v);
     }
-
+    /// Update instruction pointer
     pub fn dispatch(&mut self)
     {
         self.last_frame_mut().ip += 1;
     }
-
+    /// Invoke callable object
     pub fn invoke(&mut self, callable: Value, args: Vec<Value>) -> Value
     {
         let id = match callable {
@@ -79,12 +81,12 @@ impl Machine
         self.last_frame_mut().init_with_args(&args.as_slice());
         obj.call(self, args)
     }
-
+    /// Goto 
     pub fn branch(&mut self, idx: usize)
     {
         self.last_frame_mut().ip = idx;
     }
-
+    /// Run instructions
     pub fn run_code(&mut self, code: Vec<Instruction>) -> Result<Value,VmError>
     {
         for_c!(i = 0;i < code.len();i += 1, {
@@ -100,7 +102,7 @@ impl Machine
 
         self.execute_op()
     }
-
+    /// Execute all opcodes in current frame
     pub fn execute_op(&mut self) -> Result<Value,VmError>
     {
         let mut returns = false;

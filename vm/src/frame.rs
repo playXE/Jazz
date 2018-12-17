@@ -1,17 +1,17 @@
 use crate::{opcodes::Instruction, value::Value};
 
 ///CallFrame
-/// Stores register values, Blocks of code, registers and arguments stack
+/// Stores register values, instructions, registers and arguments stack
 #[derive(Clone, Debug,Default)]
 pub struct CallFrame
 {
     /// pointer to current block
     pub ip: usize,
-    /// blocks
+    /// Instructions
     pub code: Vec<Instruction>,
-    /// registers stored in stack, default size of `stack` is 4096
+    /// registers stored in stack, default size of `stack` is 256
     pub stack: Vec<Value>,
-    /// arguments stack, used by Call instruction
+    /// `arguments stack`: used by Call instruction
     pub arg_stack: Vec<Value>,
 }
 
