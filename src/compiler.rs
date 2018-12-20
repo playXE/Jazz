@@ -573,6 +573,7 @@ impl<'a> Compiler<'a> {
             let r2 = self.builder.register_pop();
             let r1 = self.builder.register_push_temp();
             match op {
+                Op::Ne => self.builder.push_op(Instruction::Neq(r1,r2,r3)),
                 Op::Add => self.builder.push_op(Instruction::Add(r1, r2, r3)),
                 Op::Sub => self.builder.push_op(Instruction::Sub(r1, r2, r3)),
                 Op::Mul => self.builder.push_op(Instruction::Mul(r1, r2, r3)),

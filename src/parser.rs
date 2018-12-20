@@ -242,6 +242,7 @@ pub enum Op {
     Shr,
     Access,
     Isa,
+    Ne,
 }
 
 impl Token {
@@ -1102,6 +1103,7 @@ fn parse_binop<'a>(
                 }
                 Token::GreaterThanEqual => Expr::Op(Op::Ge, Box::new(lhs_curr), Box::new(rhs)),
                 Token::PowerOf => Expr::Op(Op::Isa, Box::new(lhs_curr), Box::new(rhs)),
+                Token::NotEqualTo => Expr::Op(Op::Ne,Box::new(lhs_curr),Box::new(rhs)),
                 /* Token::PlusAssign => {
                     let lhs_copy = lhs_curr.clone();
                     Expr::Assignment(

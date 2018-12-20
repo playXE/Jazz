@@ -1,0 +1,26 @@
+class File {
+
+    func init(name) {
+        return this;
+    }
+
+    func read() {
+        // TODO
+    }
+
+    func open() {
+        // TODO
+    }
+
+    func create() {
+        // TODO
+    }
+
+    func delete() {
+        // TODO
+    }
+
+    func copy(to) {
+        // TODO
+    } 
+}

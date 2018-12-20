@@ -97,6 +97,7 @@ pub enum Instruction
 
     /// Eq R(A) = R(B) == R(C)
     Eq(usize, usize, usize),
+    Neq(usize, usize, usize),
     /// Ret0
     ///
     /// return null value
@@ -126,6 +127,7 @@ impl fmt::Display for Instruction
         use self::Instruction::*;
 
         match self {
+            Neq(dest,r1,r2) => write!(f,"Neq {} {} {}",dest,r1,r2),
             Isa(dest,r1,r2) => write!(f,"Isa {} {} {}",dest,r1,r2),
             Not(r1, r2) => write!(f, "Not {} {}", r1, r2),
             Add(r3, r1, r2) => write!(f, "Add {} {} {}", r3, r1, r2),
@@ -179,6 +181,7 @@ impl fmt::Debug for Instruction
         use self::Instruction::*;
 
         match self {
+            Neq(dest,r1,r2) => write!(f,"Neq {} {} {}",dest,r1,r2),
             Isa(dest,r1,r2) => write!(f,"Isa {} {} {}",dest,r1,r2),
             Not(r1, r2) => write!(f, "Not {} {}", r1, r2),
             Add(r3, r1, r2) => write!(f, "Add {} {} {}", r3, r1, r2),

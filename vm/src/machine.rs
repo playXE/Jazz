@@ -466,8 +466,31 @@ impl Machine
                         (Value::Double(f), Value::Float(f2)) => Value::Bool(f == (f2 as f64)),
                         (Value::Long(l), v) => Value::Bool(l == v.to_long(self)),
                         (Value::Int(i), v) => Value::Bool(i == v.to_int(self)),
-                        (Value::Double(d), v) => Value::Bool(d < v.to_double(self)),
+                        (Value::Double(d), v) => Value::Bool(d == v.to_double(self)),
                         (Value::Float(f), v) => Value::Bool(f == v.to_float(self)),
+                        (_v, Value::Null) => Value::Bool(false),
+                        (Value::Null, _v) => Value::Bool(false),
+                        _ => unimplemented!(),
+                    };
+
+                    self.set(*r3, result);
+                }
+
+                Instruction::Neq(r3, r1, r2) => {
+                    let (v1, v2) = (self.get(*r1), self.get(*r2));
+                    let result = match (v1, v2) {
+                        (Value::Int(i), Value::Int(i2)) => Value::Bool(i != i2),
+                        (Value::Long(i), Value::Long(i2)) => Value::Bool(i != i2),
+                        (Value::Float(f), Value::Float(f2)) => Value::Bool(f != f2),
+                        (Value::Double(f), Value::Double(f2)) => Value::Bool(f != f2),
+                        (Value::Int(i), Value::Long(i2)) => Value::Bool((i as i64) != i2),
+                        (Value::Long(i), Value::Int(i2)) => Value::Bool(i == (i2 as i64)),
+                        (Value::Float(f), Value::Double(f2)) => Value::Bool((f as f64) != f2),
+                        (Value::Double(f), Value::Float(f2)) => Value::Bool(f != (f2 as f64)),
+                        (Value::Long(l), v) => Value::Bool(l != v.to_long(self)),
+                        (Value::Int(i), v) => Value::Bool(i != v.to_int(self)),
+                        (Value::Double(d), v) => Value::Bool(d != v.to_double(self)),
+                        (Value::Float(f), v) => Value::Bool(f != v.to_float(self)),
                         (_v, Value::Null) => Value::Bool(false),
                         (Value::Null, _v) => Value::Bool(false),
                         _ => unimplemented!(),

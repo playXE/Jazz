@@ -1,0 +1,22 @@
+func pow(x,y) {
+    var result = x;
+
+    for (var i = 1; i < y; i += 1) {
+        result = result + x;
+    }
+
+    return result;
+}
+
+
+
+
+/// TODO: Make this function working
+func sqrt(x) {
+    var z = 1;
+    for (var i = 0; i < 10; i += 1) {
+        z -= (z*z - x) / (2 * z);
+    }
+
+    return z;
+}
