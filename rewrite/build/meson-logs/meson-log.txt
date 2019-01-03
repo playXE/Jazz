@@ -1,0 +1,35 @@
+Build started at 2019-01-03T19:58:11.347859
+Main binary: /usr/bin/python3
+Python system: Linux
+The Meson build system
+Version: 0.46.0
+Source dir: /home/aprokurov/Projects/Jazz/rewrite
+Build dir: /home/aprokurov/Projects/Jazz/rewrite/build
+Build type: native build
+Project name: jazz
+Sanity testing C compiler: cc
+Is cross compiler: False.
+Sanity check compiler command line: cc /home/aprokurov/Projects/Jazz/rewrite/build/meson-private/sanitycheckc.c -o /home/aprokurov/Projects/Jazz/rewrite/build/meson-private/sanitycheckc.exe
+Sanity check compile stdout:
+
+-----
+Sanity check compile stderr:
+
+-----
+Running test binary command: /home/aprokurov/Projects/Jazz/rewrite/build/meson-private/sanitycheckc.exe
+Native C compiler: cc (clang 5.0.1 "clang version 5.0.1 (tags/RELEASE_501/final 312548)")
+Sanity testing C++ compiler: c++
+Is cross compiler: False.
+Sanity check compiler command line: c++ /home/aprokurov/Projects/Jazz/rewrite/build/meson-private/sanitycheckcpp.cc -o /home/aprokurov/Projects/Jazz/rewrite/build/meson-private/sanitycheckcpp.exe
+Sanity check compile stdout:
+
+-----
+Sanity check compile stderr:
+
+-----
+Running test binary command: /home/aprokurov/Projects/Jazz/rewrite/build/meson-private/sanitycheckcpp.exe
+Native C++ compiler: c++ (clang 5.0.1 "clang version 5.0.1 (tags/RELEASE_501/final 312548)")
+Build machine cpu family: x86_64
+Build machine cpu: x86_64
+Build targets in project: 1
+Found ninja-1.8.2 at /usr/bin/ninja

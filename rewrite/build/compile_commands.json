@@ -1,0 +1,7 @@
+[
+  {
+    "directory": "/home/aprokurov/Projects/Jazz/rewrite/build",
+    "command": "c++ -Ijazz@exe -I. -I.. -I../src -Xclang -fcolor-diagnostics -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wnon-virtual-dtor -O0 -g  -MD -MQ 'jazz@exe/src_main.cc.o' -MF 'jazz@exe/src_main.cc.o.d' -o 'jazz@exe/src_main.cc.o' -c ../src/main.cc",
+    "file": "../src/main.cc"
+  }
+]
