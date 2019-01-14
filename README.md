@@ -1,4 +1,4 @@
-# Jazz
+# Jazz (Unmaintaned, please see https://github.com/jazz-lang/
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/playXE/Jazz/blob/master/LICENSE)
 
 
